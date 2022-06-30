@@ -1,0 +1,13 @@
+**/*.txt
+!src/vendor/modules.txt
+**/*.md
+**/Makefile
+**/LICENSE*
+**/.gitignore
+**/*.yml
+**/*.yaml
+**/*.sh
+**/AUTHORS*
+**/CONTRIBUTORS*
+**/PATENTS*
+**/*_test.go
