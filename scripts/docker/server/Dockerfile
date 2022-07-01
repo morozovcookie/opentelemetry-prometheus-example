@@ -13,7 +13,9 @@ WORKDIR /src
 COPY ./src/go.mod ./src/go.sum ./
 COPY ./src/vendor ./vendor
 
-COPY ./src/*.go ./src
+COPY ./src/*.go ./
+COPY ./src/nanoid ./nanoid
+COPY ./src/time ./time
 
 COPY ./src/cmd/server ./cmd/server
 

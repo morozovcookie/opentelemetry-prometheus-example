@@ -1,6 +1,7 @@
 package otelexample
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -18,3 +19,9 @@ func (id ID) String() string {
 
 // EmptyID is the constant for the identifier with empty value.
 const EmptyID = ID("")
+
+// IdentifierGenerator represents a service for generate unique identifier values.
+type IdentifierGenerator interface {
+	// GenerateIdentifier returns a new unique identifier.
+	GenerateIdentifier(ctx context.Context) ID
+}

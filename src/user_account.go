@@ -19,6 +19,16 @@ type UserAccount struct {
 	CreatedAt time.Time
 }
 
+// Clone creates a deep copy of UserAccount.
+func (ua *UserAccount) Clone() *UserAccount {
+	return &UserAccount{
+		ID:        ua.ID,
+		Username:  ua.Username,
+		User:      ua.User.Clone(),
+		CreatedAt: ua.CreatedAt,
+	}
+}
+
 // UserAccountService represents a service for managing UserAccount data.
 type UserAccountService interface {
 	// CreateUserAccount creates a new user account.
@@ -26,4 +36,7 @@ type UserAccountService interface {
 
 	// FindUserAccounts returns a list of user accounts.
 	FindUserAccounts(ctx context.Context, opts FindOptions) ([]*UserAccount, error)
+
+	// FindUserAccountByID returns user account by unique identifier.
+	FindUserAccountByID(ctx context.Context, id ID) (*UserAccount, error)
 }

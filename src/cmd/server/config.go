@@ -43,9 +43,28 @@ func (cfg *MonitorConfig) Parse() error {
 	return nil
 }
 
+type PerconaConfig struct {
+	Dsn string
+}
+
+func NewPerconaConfig() *PerconaConfig {
+	return &PerconaConfig{
+		Dsn: "",
+	}
+}
+
+func (cfg *PerconaConfig) Parse() error {
+	if dsn := os.Getenv("SERVER_PERCONA_DSN"); dsn != "" {
+		cfg.Dsn = dsn
+	}
+
+	return nil
+}
+
 type Config struct {
 	*HTTPConfig
 	*MonitorConfig
+	*PerconaConfig
 
 	LogLevel string
 
@@ -56,6 +75,7 @@ func NewConfig() *Config {
 	return &Config{
 		HTTPConfig:    NewHTTPConfig(),
 		MonitorConfig: NewMonitorConfig(),
+		PerconaConfig: NewPerconaConfig(),
 
 		LogLevel: "",
 
@@ -69,6 +89,7 @@ func (cfg *Config) Parse() error {
 	}{
 		cfg.HTTPConfig,
 		cfg.MonitorConfig,
+		cfg.PerconaConfig,
 	} {
 		if err := cfg.Parse(); err != nil {
 			return fmt.Errorf("parse config: %w", err)
@@ -85,8 +106,12 @@ func (cfg *Config) Parse() error {
 func (cfg *Config) parse() error {
 	var err error
 
+	if logLevel := os.Getenv("SERVER_LOG_LEVEL"); logLevel != "" {
+		cfg.LogLevel = logLevel
+	}
+
 	if cfg.ZapLevel, err = uberzap.ParseAtomicLevel(cfg.LogLevel); err != nil {
-		return fmt.Errorf("parse root config: %w", err)
+		return err
 	}
 
 	return nil

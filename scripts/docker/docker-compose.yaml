@@ -10,6 +10,8 @@ services:
     image: percona/percona-server@sha256:ad0f73c99b004074c2e8555c5229d247e95df8a9f7c0f0433d73bc86881f13d9 # percona/percona-server:8.0.26
     environment:
     - MYSQL_DATABASE=db
+    - MYSQL_USER=nonroot
+    - MYSQL_PASSWORD=nonroot
     - MYSQL_ROOT_USER=root
     - MYSQL_ROOT_PASSWORD=root
     networks:
@@ -40,12 +42,15 @@ services:
     - '127.0.0.1:10000:8080'
 
   server:
+    restart: on-failure
     build:
       context: ./../..
       dockerfile: ./scripts/docker/server/Dockerfile
     environment:
     - SERVER_HTTP_ADDRESS=0.0.0.0:8080
     - SERVER_MONITOR_ADDRESS=0.0.0.0:9090
+    - SERVER_PERCONA_DSN=nonroot:nonroot@tcp(percona:3306)/db
+    - SERVER_LOG_LEVEL=debug
     networks:
     - percona
     ports:

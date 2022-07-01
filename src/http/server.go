@@ -22,7 +22,7 @@ type Server struct {
 }
 
 // NewServer returns a new Server instance.
-func NewServer(addr string, handler http.Handler, opts ...ServerOptionFunc) *Server {
+func NewServer(addr string, handler http.Handler, opts ...ServerOption) *Server {
 	srv := &Server{
 		addr: addr,
 
@@ -36,7 +36,7 @@ func NewServer(addr string, handler http.Handler, opts ...ServerOptionFunc) *Ser
 	}
 
 	for _, opt := range opts {
-		opt(srv)
+		opt.apply(srv)
 	}
 
 	srv.instance = &http.Server{

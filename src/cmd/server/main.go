@@ -6,9 +6,10 @@ import (
 	"log"
 	"os/signal"
 	"syscall"
-	"time"
+	stdtime "time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/http"
 	v1 "github.com/morozovcookie/opentelemetry-prometheus-example/http/v1"
 	uberzap "go.uber.org/zap"
@@ -16,27 +17,40 @@ import (
 )
 
 func main() {
-	cfg := NewConfig()
-	if err := cfg.Parse(); err != nil {
+	config := NewConfig()
+	if err := config.Parse(); err != nil {
 		log.Fatalln(err)
 	}
 
 	loggerConfig := uberzap.NewProductionConfig()
-	loggerConfig.Level = cfg.ZapLevel
+	loggerConfig.Level = config.ZapLevel
 
 	logger, err := loggerConfig.Build()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
+	defer func(logger *uberzap.Logger) {
+		if err := logger.Sync(); err != nil {
+			log.Fatalln(err)
+		}
+	}(logger)
+
+	logger = logger.Named("server")
+
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	group, ctx := errgroup.WithContext(ctx)
 
+	be := newBackend(config, logger)
+	if err := be.init(ctx); err != nil {
+		logger.Fatal("failed to init backend", uberzap.Error(err))
+	}
+
 	var (
-		httpServer    = initHTTPServer(cfg)
-		monitorServer = initMonitorServer(cfg)
+		httpServer    = initHTTPServer(be)
+		monitorServer = initMonitorServer(be)
 	)
 
 	logger.Info("starting application")
@@ -50,9 +64,9 @@ func main() {
 
 	logger.Info("stopping application")
 
-	const timeout = time.Second * 5
+	const timeout = stdtime.Second * 5
 
-	ctx, cancel = context.WithDeadline(ctx, time.Now().Add(timeout))
+	ctx, cancel = context.WithDeadline(ctx, stdtime.Now().Add(timeout))
 	defer cancel()
 
 	if err := httpServer.Shutdown(ctx); err != nil {
@@ -70,16 +84,20 @@ func main() {
 	logger.Info("application is stopped")
 }
 
-func initHTTPServer(cfg *Config) *http.Server {
-	httpRouter := chi.NewRouter()
+func initHTTPServer(be *backend) *http.Server {
+	router := chi.NewRouter()
+	router.Use(middleware.RealIP, middleware.Logger, middleware.Recoverer)
 
-	httpRouter.Mount(v1.UserAccountHandlerPathPrefix, v1.NewUserAccountHandler())
+	router.Mount(v1.UserAccountHandlerPathPrefix, v1.NewUserAccountHandler(be.userAccountService))
 
-	return http.NewServer(cfg.HTTPConfig.Address, httpRouter)
+	return http.NewServer(be.config.HTTPConfig.Address, router)
 }
 
-func initMonitorServer(cfg *Config) *http.Server {
-	return http.NewServer(cfg.MonitorConfig.Address, chi.NewRouter())
+func initMonitorServer(be *backend) *http.Server {
+	router := chi.NewRouter()
+	router.Use(middleware.RealIP, middleware.Logger, middleware.Recoverer)
+
+	return http.NewServer(be.config.MonitorConfig.Address, router)
 }
 
 func startServer(server *http.Server, name string, logger *uberzap.Logger) func() error {

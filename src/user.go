@@ -18,3 +18,13 @@ type User struct {
 	// CreatedAt is the time when user was created.
 	CreatedAt time.Time
 }
+
+// Clone creates a deep copy of User.
+func (ua *User) Clone() *User {
+	return &User{
+		ID:        ua.ID,
+		FirstName: ua.FirstName,
+		LastName:  ua.LastName,
+		CreatedAt: ua.CreatedAt,
+	}
+}
