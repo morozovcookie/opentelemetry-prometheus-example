@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/http"
+	v1 "github.com/morozovcookie/opentelemetry-prometheus-example/http/v1"
 	uberzap "go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -34,11 +35,8 @@ func main() {
 	group, ctx := errgroup.WithContext(ctx)
 
 	var (
-		httpRouter = chi.NewRouter()
-		httpServer = http.NewServer(cfg.HTTPConfig.Address, httpRouter)
-
-		monitorRouter = chi.NewRouter()
-		monitorServer = http.NewServer(cfg.MonitorConfig.Address, monitorRouter)
+		httpServer    = initHTTPServer(cfg)
+		monitorServer = initMonitorServer(cfg)
 	)
 
 	logger.Info("starting application")
@@ -70,6 +68,18 @@ func main() {
 	}
 
 	logger.Info("application is stopped")
+}
+
+func initHTTPServer(cfg *Config) *http.Server {
+	httpRouter := chi.NewRouter()
+
+	httpRouter.Mount(v1.UserAccountHandlerPathPrefix, v1.NewUserAccountHandler())
+
+	return http.NewServer(cfg.HTTPConfig.Address, httpRouter)
+}
+
+func initMonitorServer(cfg *Config) *http.Server {
+	return http.NewServer(cfg.MonitorConfig.Address, chi.NewRouter())
 }
 
 func startServer(server *http.Server, name string, logger *uberzap.Logger) func() error {

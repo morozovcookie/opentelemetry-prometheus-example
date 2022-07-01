@@ -15,13 +15,13 @@ COPY ./src/vendor ./vendor
 
 COPY ./src/*.go ./src
 
+COPY ./src/cmd/server ./cmd/server
+
 COPY ./src/opentelemetry ./opentelemetry
 COPY ./src/zap ./zap
 
 COPY ./src/percona ./percona
 COPY ./src/http ./http
-
-COPY ./src/cmd/server ./cmd/server
 
 RUN go build \
     -mod=vendor \
@@ -36,5 +36,7 @@ COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /usr/local/server /usr/local/server
 
 USER nonroot
+
+EXPOSE 8080 9090
 
 ENTRYPOINT ["/usr/local/server"]

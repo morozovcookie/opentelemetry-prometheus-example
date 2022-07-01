@@ -38,3 +38,18 @@ services:
       dockerfile: ./scripts/docker/swagger/Dockerfile
     ports:
     - '127.0.0.1:10000:8080'
+
+  server:
+    build:
+      context: ./../..
+      dockerfile: ./scripts/docker/server/Dockerfile
+    environment:
+    - SERVER_HTTP_ADDRESS=0.0.0.0:8080
+    - SERVER_MONITOR_ADDRESS=0.0.0.0:9090
+    networks:
+    - percona
+    ports:
+    - '127.0.0.1:8080:8080'
+    - '127.0.0.1:9090:9090'
+    depends_on:
+    - percona
