@@ -1,0 +1,15 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Title",
+    "description": "Title",
+    "version": "1.0.0"
+  },
+  "servers": [],
+  "paths": {
+    "/api/v1/user-accounts": {
+      "summary": "Method for interact with collection of user account",
+      "$ref": "./paths/UserAccounts/user-accounts.json"
+    }
+  }
+}

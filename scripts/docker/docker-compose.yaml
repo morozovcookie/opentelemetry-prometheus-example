@@ -31,3 +31,10 @@ services:
     - percona
     depends_on:
     - percona
+
+  server-swagger:
+    build:
+      context: ./../..
+      dockerfile: ./scripts/docker/swagger/Dockerfile
+    ports:
+    - '127.0.0.1:10000:8080'

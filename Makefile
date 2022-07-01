@@ -56,6 +56,12 @@ hadolint-schema: hadolint-check
 	@echo "+ $@"
 	@$(HADOLINT) $(DOCKER_DIR)/schema/Dockerfile
 
+# Checks docker image with the swagger.
+.PHONY: hadolint-swagger
+hadolint-swagger: hadolint-check
+	@echo "+ $@"
+	@$(HADOLINT) $(DOCKER_DIR)/swagger/Dockerfile
+
 DOCKER = $(shell which docker)
 # Checks if docker exists.
 docker-check:
@@ -63,7 +69,7 @@ docker-check:
 
 # Build docker images.
 .PHONY: docker-build
-docker-build: docker-build-server docker-build-schema
+docker-build: docker-build-server docker-build-schema docker-build-swagger
 
 # Builds docker image for the server.
 .PHONY: docker-build-server
@@ -83,6 +89,16 @@ docker-build-schema: docker-check hadolint-schema
 		--rm \
 		-t server-schema:latest \
 		-f $(DOCKER_DIR)/schema/Dockerfile \
+		.
+
+# Builds docker image for the swagger.
+.PHONY: docker-build-swagger
+docker-build-swagger: docker-check hadolint-swagger
+	@echo "+ $@"
+	@$(DOCKER) build \
+		--rm \
+		-t server-swagger:latest \
+		-f $(DOCKER_DIR)/swagger/Dockerfile \
 		.
 
 # Runs docker image with the server application.

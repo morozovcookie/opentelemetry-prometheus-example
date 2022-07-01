@@ -1,0 +1,16 @@
+{
+  "get": {
+    "summary": "Returns a list of user accounts",
+    "responses": {},
+    "tags": [
+      "User Account"
+    ]
+  },
+  "post": {
+    "summary": "Creates a new user account",
+    "responses": {},
+    "tags": [
+      "User Account"
+    ]
+  }
+}
