@@ -7,6 +7,7 @@
 **/*.yml
 **/*.yaml
 **/*.sh
+!**/docker-entrypoint.sh
 **/AUTHORS*
 **/CONTRIBUTORS*
 **/PATENTS*

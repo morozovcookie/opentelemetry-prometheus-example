@@ -10,8 +10,6 @@ services:
     image: percona/percona-server@sha256:ad0f73c99b004074c2e8555c5229d247e95df8a9f7c0f0433d73bc86881f13d9 # percona/percona-server:8.0.26
     environment:
     - MYSQL_DATABASE=db
-    - MYSQL_USER=nonroot
-    - MYSQL_PASSWORD=nonroot
     - MYSQL_ROOT_USER=root
     - MYSQL_ROOT_PASSWORD=root
     networks:
@@ -25,6 +23,8 @@ services:
     build:
       context: ./../..
       dockerfile: ./scripts/docker/schema/Dockerfile
+    command:
+    - up
     environment:
     - PERCONA_DSN=mysql://root:root@tcp(percona:3306)/db
     networks:
