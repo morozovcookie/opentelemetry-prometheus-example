@@ -22,20 +22,6 @@ migration: migrate-check
 		-seq \
 		$(NAME)
 
-GOLANGCI_LINT = $(shell which golangci-lint)
-# Checks if golangci-lint exist.
-.PHONY: golangci-lint-check
-golangci-lint-check:
-	$(call error-if-emply,$(GOLANGCI_LINT),golangci-lint)
-
-# Check lint, code styling rules. e.g. pylint, phpcs, eslint, style (java) etc ...
-.PHONY: style
-style:
-	@echo "+ $@"
-	@$(GOLANGCI_LINT) run \
-		-v \
-		"$(SCRIPTS_DIR)/..."
-
 DOCKER_DIR = $(SCRIPTS_DIR)/docker
 
 HADOLINT = $(shell which hadolint)

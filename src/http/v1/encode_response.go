@@ -20,6 +20,7 @@ func encodeResponse(writer http.ResponseWriter, status int, response any) {
 	}
 }
 
+// nolint:gochecknoglobals
 var mapErrorCodeToStatusCode = map[otelexample.ErrorCode]int{
 	otelexample.ErrorCodeOK: http.StatusOK,
 

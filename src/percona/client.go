@@ -74,6 +74,9 @@ func NewClient(dsn string, opts ...ClientOption) *Client {
 		maxIdleConns:    DefaultMaxIdleConns,
 		connMaxIdleTime: DefaultConnMaxIdleTime,
 		maxOpenConns:    DefaultMaxOpenConns,
+
+		dbName: "",
+		dbUser: "",
 	}
 
 	for _, opt := range opts {
@@ -109,10 +112,10 @@ func (c *Client) Connect(ctx context.Context) error {
 		return fmt.Errorf("connect: %w", err)
 	}
 
-	//c.db.SetConnMaxLifetime(c.connMaxLifetime)
-	//c.db.SetMaxIdleConns(c.maxIdleConns)
-	//c.db.SetConnMaxIdleTime(c.connMaxIdleTime)
-	//c.db.SetMaxOpenConns(c.maxOpenConns)
+	c.db.SetConnMaxLifetime(c.connMaxLifetime)
+	c.db.SetMaxIdleConns(c.maxIdleConns)
+	c.db.SetConnMaxIdleTime(c.connMaxIdleTime)
+	c.db.SetMaxOpenConns(c.maxOpenConns)
 
 	if err = c.Ping(ctx); err != nil {
 		return fmt.Errorf("connect: %w", err)

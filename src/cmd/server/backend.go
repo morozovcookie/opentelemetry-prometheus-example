@@ -26,14 +26,14 @@ type backend struct {
 }
 
 func newBackend(config *Config, logger *uberzap.Logger) *backend {
-	be := new(backend)
+	backend := new(backend)
 
-	be.config, be.logger = config, logger
+	backend.config, backend.logger = config, logger
 
-	be.initIdentifierGenerator()
-	be.initTimer()
+	backend.initIdentifierGenerator()
+	backend.initTimer()
 
-	return be
+	return backend
 }
 
 func (be *backend) init(ctx context.Context) error {

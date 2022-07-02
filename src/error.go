@@ -48,6 +48,7 @@ func ErrorCodeFromError(err error) ErrorCode {
 
 	var customErr *Error
 	ok := errors.As(err, &customErr)
+
 	if ok && customErr.Code != "" {
 		return customErr.Code
 	}
@@ -66,6 +67,7 @@ func ErrorMessageFromError(err error) string {
 
 	var customErr *Error
 	ok := errors.As(err, &customErr)
+
 	if ok && customErr.Message != "" {
 		return customErr.Message
 	}
