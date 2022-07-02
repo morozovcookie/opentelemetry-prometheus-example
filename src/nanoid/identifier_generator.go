@@ -9,7 +9,7 @@ import (
 
 const (
 	alphabet = "abcdefghijklmnopqrstuvwxyz1234567890"
-	size     = 32
+	size     = 64
 )
 
 var _ otelexample.IdentifierGenerator = (*IdentifierGenerator)(nil)

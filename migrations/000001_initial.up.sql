@@ -3,10 +3,10 @@ BEGIN;
 CREATE TABLE user_accounts (
     row_id BIGINT AUTO_INCREMENT NOT NULL COMMENT 'row unique identifier',
 
-    user_account_id VARCHAR(32) NOT NULL
+    user_account_id VARCHAR(64) NOT NULL
         COMMENT 'user account unique identifier',
     username VARCHAR(255) NOT NULL COMMENT 'user username',
-    user_id VARCHAR(32) NOT NULL COMMENT 'user unique identifier',
+    user_id VARCHAR(64) NOT NULL COMMENT 'user unique identifier',
     created_at BIGINT NOT NULL COMMENT 'time when record was created',
 
     PRIMARY KEY (row_id ASC),
@@ -17,7 +17,7 @@ CREATE TABLE user_accounts (
 CREATE TABLE users (
     row_id BIGINT AUTO_INCREMENT NOT NULL COMMENT 'row unique identifier',
 
-    user_id VARCHAR(32) NOT NULL COMMENT 'user unique identifier',
+    user_id VARCHAR(64) NOT NULL COMMENT 'user unique identifier',
     first_name VARCHAR(255) NOT NULL COMMENT 'user first name',
     last_name VARCHAR(255) NOT NULL COMMENT 'user last name',
     created_at BIGINT NOT NULL COMMENT 'time when record was created',
