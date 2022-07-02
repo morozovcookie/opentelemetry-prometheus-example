@@ -3,6 +3,7 @@ package v1
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -16,6 +17,7 @@ const (
 
 	CreateUserAccountPathPrefix = "/"
 	FindUserAccountsPathPrefix  = "/"
+	FindUserAccountPathPrefix   = "/{userAccountId}"
 )
 
 var _ http.Handler = (*UserAccountHandler)(nil)
@@ -38,6 +40,7 @@ func NewUserAccountHandler(userAccountService otelexample.UserAccountService) *U
 
 	router.Post(CreateUserAccountPathPrefix, handler.handleCreateUserAccount)
 	router.Get(FindUserAccountsPathPrefix, handler.handleFindUserAccounts)
+	router.Get(FindUserAccountPathPrefix, handler.handleFindUserAccount)
 
 	return handler
 }
@@ -91,10 +94,16 @@ func (h *UserAccountHandler) handleCreateUserAccount(writer http.ResponseWriter,
 		return
 	}
 
+	writer.Header().Set("Location", fmt.Sprintf("%s/%s", UserAccountHandlerPathPrefix, account.ID))
 	encodeResponse(writer, http.StatusCreated, nil)
 }
 
 func (h *UserAccountHandler) handleFindUserAccounts(writer http.ResponseWriter, request *http.Request) {
+	writer.WriteHeader(http.StatusOK)
+	_, _ = io.Copy(writer, bytes.NewBufferString("{}\n"))
+}
+
+func (h *UserAccountHandler) handleFindUserAccount(writer http.ResponseWriter, request *http.Request) {
 	writer.WriteHeader(http.StatusOK)
 	_, _ = io.Copy(writer, bytes.NewBufferString("{}\n"))
 }
