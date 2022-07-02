@@ -17,7 +17,7 @@ const (
 
 	CreateUserAccountPathPrefix = "/"
 	FindUserAccountsPathPrefix  = "/"
-	FindUserAccountPathPrefix   = "/{userAccountId}"
+	FindUserAccountPathPrefix   = "/{id}"
 )
 
 var _ http.Handler = (*UserAccountHandler)(nil)
@@ -103,7 +103,58 @@ func (h *UserAccountHandler) handleFindUserAccounts(writer http.ResponseWriter, 
 	_, _ = io.Copy(writer, bytes.NewBufferString("{}\n"))
 }
 
+type FindUserAccountRequest struct {
+	ID otelexample.ID
+}
+
+func decodeFindUserAccount(request *http.Request) *FindUserAccountRequest {
+	return &FindUserAccountRequest{
+		ID: otelexample.ID(chi.URLParam(request, "id")),
+	}
+}
+
+type User struct {
+	ID        string `json:"id"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	CreatedAt int64  `json:"createdAt"`
+}
+
+type UserAccount struct {
+	ID        string `json:"id"`
+	Username  string `json:"username"`
+	User      *User  `json:"user"`
+	CreatedAt int64  `json:"createdAt"`
+}
+
+type FindUserAccountResponse UserAccount
+
+func newFindUserAccountResponse(ua *otelexample.UserAccount) *FindUserAccountResponse {
+	return &FindUserAccountResponse{
+		ID:       ua.ID.String(),
+		Username: ua.Username,
+		User: &User{
+			ID:        ua.User.ID.String(),
+			FirstName: ua.User.FirstName,
+			LastName:  ua.User.LastName,
+			CreatedAt: ua.User.CreatedAt.UnixMilli(),
+		},
+		CreatedAt: ua.CreatedAt.UnixMilli(),
+	}
+}
+
 func (h *UserAccountHandler) handleFindUserAccount(writer http.ResponseWriter, request *http.Request) {
-	writer.WriteHeader(http.StatusOK)
-	_, _ = io.Copy(writer, bytes.NewBufferString("{}\n"))
+	var (
+		ctx     = request.Context()
+		decoded = decodeFindUserAccount(request)
+	)
+
+	ua, err := h.userAccountService.FindUserAccountByID(ctx, decoded.ID)
+	if err != nil {
+		encodeErrorResponse(writer, err)
+
+		return
+	}
+
+	encodeResponse(writer, http.StatusOK, newFindUserAccountResponse(ua))
 }

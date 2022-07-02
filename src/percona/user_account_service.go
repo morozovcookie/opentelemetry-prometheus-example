@@ -2,6 +2,8 @@ package percona
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 // UserAccountService represents a service for managing UserAccount data.
 type UserAccountService struct {
 	txBeginner TxBeginner
+	preparer   Preparer
 
 	identifierGenerator otelexample.IdentifierGenerator
 	timer               otelexample.Timer
@@ -19,11 +22,13 @@ type UserAccountService struct {
 // NewUserAccountService returns a new instance of UserAccountService.
 func NewUserAccountService(
 	beginner TxBeginner,
+	preparer Preparer,
 	identifierGenerator otelexample.IdentifierGenerator,
 	timer otelexample.Timer,
 ) *UserAccountService {
 	return &UserAccountService{
 		txBeginner: beginner,
+		preparer:   preparer,
 
 		identifierGenerator: identifierGenerator,
 		timer:               timer,
@@ -142,5 +147,46 @@ func (svc *UserAccountService) FindUserAccountByID(
 	*otelexample.UserAccount,
 	error,
 ) {
-	return nil, nil
+	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(time.Second))
+	defer cancel()
+
+	stmt, err := svc.preparer.PrepareContext(ctx, `SELECT ua.username, ua.created_at, u.user_id, u.first_name, `+
+		`u.last_name, u.created_at FROM user_accounts as ua JOIN users as u ON ua.user_id = u.user_id `+
+		`WHERE ua.user_account_id = ?`)
+	if err != nil {
+		return nil, fmt.Errorf("find user account by id: %w", err)
+	}
+
+	defer func(ctx context.Context, stmt Stmt, err *error) {
+		if closeErr := stmt.Close(ctx); closeErr != nil {
+			*err = closeErr
+		}
+	}(ctx, stmt, &err)
+
+	var (
+		userAccountCreatedAt int64
+		userCreatedAt        int64
+
+		ua = new(otelexample.UserAccount)
+	)
+
+	ua.ID, ua.User = id, new(otelexample.User)
+
+	err = stmt.QueryRowContext(ctx, id.String()).Scan(&ua.Username, &userAccountCreatedAt, &ua.User.ID,
+		&ua.User.FirstName, &ua.User.LastName, &userCreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("find user account by id: %w", &otelexample.Error{
+			Code:    otelexample.ErrorCodeNotFound,
+			Message: "user account does not exist",
+			Err:     nil,
+		})
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("find user account by id: %w", err)
+	}
+
+	ua.CreatedAt, ua.User.CreatedAt = time.UnixMilli(userAccountCreatedAt), time.UnixMilli(userCreatedAt)
+
+	return ua, nil
 }

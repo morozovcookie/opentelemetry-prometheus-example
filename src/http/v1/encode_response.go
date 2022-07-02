@@ -24,7 +24,8 @@ func encodeResponse(writer http.ResponseWriter, status int, response any) {
 var mapErrorCodeToStatusCode = map[otelexample.ErrorCode]int{
 	otelexample.ErrorCodeOK: http.StatusOK,
 
-	otelexample.ErrorCodeInvalid: http.StatusBadRequest,
+	otelexample.ErrorCodeInvalid:  http.StatusBadRequest,
+	otelexample.ErrorCodeNotFound: http.StatusNotFound,
 
 	otelexample.ErrorCodeInternal: http.StatusInternalServerError,
 }

@@ -11,6 +11,9 @@ type Stmt interface {
 	// returns a Result summarizing the effect of the statement.
 	ExecContext(ctx context.Context, args ...any) (sql.Result, error)
 
+	// QueryRowContext executes a prepared query statement with the given arguments.
+	QueryRowContext(ctx context.Context, args ...any) *sql.Row
+
 	// Close closes the statement.
 	Close(ctx context.Context) error
 }
@@ -26,6 +29,11 @@ type stmt struct {
 // returns a Result summarizing the effect of the statement.
 func (stmt *stmt) ExecContext(ctx context.Context, args ...any) (sql.Result, error) {
 	return stmt.sqlStmt.ExecContext(ctx, args...)
+}
+
+// QueryRowContext executes a prepared query statement with the given arguments.
+func (stmt *stmt) QueryRowContext(ctx context.Context, args ...any) *sql.Row {
+	return stmt.sqlStmt.QueryRowContext(ctx, args...)
 }
 
 func (stmt *stmt) Close(_ context.Context) error {

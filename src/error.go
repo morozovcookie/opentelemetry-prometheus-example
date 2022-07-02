@@ -13,6 +13,7 @@ type ErrorCode string
 const (
 	ErrorCodeOK       = ErrorCode("ok")
 	ErrorCodeInvalid  = ErrorCode("invalid")
+	ErrorCodeNotFound = ErrorCode("not_found")
 	ErrorCodeInternal = ErrorCode("internal")
 )
 

@@ -38,14 +38,14 @@ func main() {
 
 	group, ctx := errgroup.WithContext(ctx)
 
-	backend := newBackend(config, logger)
-	if err := backend.init(ctx); err != nil {
+	be := newBackend(config, logger)
+	if err := be.init(ctx); err != nil {
 		logger.Fatal("failed to init backend", uberzap.Error(err))
 	}
 
 	var (
-		httpServer    = initHTTPServer(backend)
-		monitorServer = initMonitorServer(backend)
+		httpServer    = initHTTPServer(be)
+		monitorServer = initMonitorServer(be)
 	)
 
 	logger.Info("starting application")
@@ -91,20 +91,20 @@ func initLogger(config *Config) (*uberzap.Logger, error) {
 	return logger.Named("server"), nil
 }
 
-func initHTTPServer(backend *backend) *http.Server {
+func initHTTPServer(be *backend) *http.Server {
 	router := chi.NewRouter()
 	router.Use(middleware.RealIP, middleware.Logger, middleware.Recoverer)
 
-	router.Mount(v1.UserAccountHandlerPathPrefix, v1.NewUserAccountHandler(backend.userAccountService))
+	router.Mount(v1.UserAccountHandlerPathPrefix, v1.NewUserAccountHandler(be.userAccountService))
 
-	return http.NewServer(backend.config.HTTPConfig.Address, router)
+	return http.NewServer(be.config.HTTPConfig.Address, router)
 }
 
-func initMonitorServer(backend *backend) *http.Server {
+func initMonitorServer(be *backend) *http.Server {
 	router := chi.NewRouter()
 	router.Use(middleware.RealIP, middleware.Logger, middleware.Recoverer)
 
-	return http.NewServer(backend.config.MonitorConfig.Address, router)
+	return http.NewServer(be.config.MonitorConfig.Address, router)
 }
 
 func startServer(server *http.Server, name string, logger *uberzap.Logger) func() error {

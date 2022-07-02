@@ -26,14 +26,14 @@ type backend struct {
 }
 
 func newBackend(config *Config, logger *uberzap.Logger) *backend {
-	backend := new(backend)
+	be := new(backend)
 
-	backend.config, backend.logger = config, logger
+	be.config, be.logger = config, logger
 
-	backend.initIdentifierGenerator()
-	backend.initTimer()
+	be.initIdentifierGenerator()
+	be.initTimer()
 
-	return backend
+	return be
 }
 
 func (be *backend) init(ctx context.Context) error {
@@ -55,7 +55,7 @@ func (be *backend) init(ctx context.Context) error {
 }
 
 func (be *backend) initUserAccountService(logger *uberzap.Logger) {
-	be.userAccountService = percona.NewUserAccountService(be.txBeginner, be.identifierGenerator, be.timer)
+	be.userAccountService = percona.NewUserAccountService(be.txBeginner, be.preparer, be.identifierGenerator, be.timer)
 	be.userAccountService = zap.NewUserAccountService(be.userAccountService, logger.Named("user_account_svc"))
 }
 
