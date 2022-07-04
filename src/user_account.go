@@ -35,8 +35,15 @@ type UserAccountService interface {
 	CreateUserAccount(ctx context.Context, ua *UserAccount) error
 
 	// FindUserAccounts returns a list of user accounts.
-	FindUserAccounts(ctx context.Context, opts FindOptions) ([]*UserAccount, error)
+	FindUserAccounts(ctx context.Context, opts FindOptions) (*FindUserAccountsResult, error)
 
 	// FindUserAccountByID returns user account by unique identifier.
 	FindUserAccountByID(ctx context.Context, id ID) (*UserAccount, error)
+}
+
+type FindUserAccountsResult struct {
+	HasNext bool
+	Total   uint64
+	Options FindOptions
+	Data    []*UserAccount
 }

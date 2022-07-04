@@ -51,6 +51,7 @@ services:
     - SERVER_MONITOR_ADDRESS=0.0.0.0:9090
     - SERVER_PERCONA_DSN=nonroot:nonroot@tcp(percona:3306)/db
     - SERVER_LOG_LEVEL=debug
+    - SERVER_BASE_URL=http://127.0.0.1:8080
     networks:
     - percona
     ports:

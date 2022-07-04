@@ -95,7 +95,7 @@ func initHTTPServer(be *backend) *http.Server {
 	router := chi.NewRouter()
 	router.Use(middleware.RealIP, middleware.Logger, middleware.Recoverer)
 
-	router.Mount(v1.UserAccountHandlerPathPrefix, v1.NewUserAccountHandler(be.userAccountService))
+	router.Mount(v1.UserAccountHandlerPathPrefix, v1.NewUserAccountHandler(be.config.BaseURL, be.userAccountService))
 
 	return http.NewServer(be.config.HTTPConfig.Address, router)
 }

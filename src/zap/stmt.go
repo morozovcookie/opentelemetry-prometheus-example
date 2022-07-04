@@ -68,6 +68,35 @@ func (stmt *stmt) QueryRowContext(ctx context.Context, args ...any) *sql.Row {
 	return row
 }
 
+// QueryContext executes a prepared query statement with the given arguments
+// and returns the query results as a *Rows.
+func (stmt *stmt) QueryContext(ctx context.Context, args ...any) (*sql.Rows, error) {
+	var (
+		rows *sql.Rows
+		err  error
+	)
+
+	start, end, elapsed := trackOfTime(func() {
+		rows, err = stmt.wrapped.QueryContext(ctx, args...)
+	})
+
+	ff := []zap.Field{
+		zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+		zap.String("dbName", stmt.dbName), zap.String("dbUser", stmt.dbUser), zap.Any("args", args),
+		zap.String("query", stmt.query),
+	}
+
+	stmt.logger.Debug("query", ff...)
+
+	if err != nil {
+		stmt.logger.Error("query", ff...)
+
+		return nil, err
+	}
+
+	return rows, nil
+}
+
 func (stmt *stmt) Close(ctx context.Context) error {
 	var err error
 

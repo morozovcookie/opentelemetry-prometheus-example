@@ -56,21 +56,27 @@ func (svc *UserAccountService) FindUserAccounts(
 	ctx context.Context,
 	opts otelexample.FindOptions,
 ) (
-	[]*otelexample.UserAccount,
+	*otelexample.FindUserAccountsResult,
 	error,
 ) {
 	var (
-		uaa []*otelexample.UserAccount
-		err error
+		result *otelexample.FindUserAccountsResult
+		err    error
 	)
 
 	start, end, elapsed := trackOfTime(func() {
-		uaa, err = svc.wrapped.FindUserAccounts(ctx, opts)
+		result, err = svc.wrapped.FindUserAccounts(ctx, opts)
 	})
+
+	var count int
+	if result != nil {
+		count = len(result.Data)
+	}
 
 	ff := []zap.Field{
 		zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
-		zap.Any("options", opts), zap.Any("accounts", uaa), zap.Error(err),
+		zap.Any("options", opts), zap.Any("result", result), zap.Int("dataSize", count),
+		zap.Error(err),
 	}
 
 	svc.logger.Debug("find user accounts", ff...)
@@ -81,7 +87,7 @@ func (svc *UserAccountService) FindUserAccounts(
 		return nil, err // nolint:wrapcheck
 	}
 
-	return uaa, nil
+	return result, nil
 }
 
 // FindUserAccountByID returns user account by unique identifier.

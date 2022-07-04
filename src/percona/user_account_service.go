@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	otelexample "github.com/morozovcookie/opentelemetry-prometheus-example"
@@ -133,10 +134,137 @@ func (svc *UserAccountService) FindUserAccounts(
 	ctx context.Context,
 	opts otelexample.FindOptions,
 ) (
+	*otelexample.FindUserAccountsResult,
+	error,
+) {
+	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(time.Second))
+	defer cancel()
+
+	var (
+		result = new(otelexample.FindUserAccountsResult)
+
+		err error
+	)
+
+	result.Options = opts
+	if result.Total, err = svc.findUserAccountsCountTotal(ctx); err != nil {
+		return nil, fmt.Errorf("find user accounts: %w", err)
+	}
+
+	if result.Data, err = svc.findUserAccounts(ctx, opts); err != nil {
+		return nil, fmt.Errorf("find user accounts: %w", err)
+	}
+
+	if result.HasNext, err = svc.findUserAccountsHasNext(ctx, opts.Offset()+opts.Limit()); err != nil {
+		return nil, fmt.Errorf("find user accounts: %w", err)
+	}
+
+	return result, nil
+}
+
+func (svc *UserAccountService) findUserAccountsCountTotal(ctx context.Context) (uint64, error) {
+	stmt, err := svc.preparer.PrepareContext(ctx, `SELECT count(1) FROM user_accounts`)
+	if err != nil {
+		return 0, err
+	}
+
+	defer func(ctx context.Context, stmt Stmt, err *error) {
+		if closeErr := stmt.Close(ctx); closeErr != nil {
+			*err = closeErr
+		}
+	}(ctx, stmt, &err)
+
+	var total uint64
+
+	if err := stmt.QueryRowContext(ctx).Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+func (svc *UserAccountService) findUserAccounts(
+	ctx context.Context,
+	opts otelexample.FindOptions,
+) (
 	[]*otelexample.UserAccount,
 	error,
 ) {
-	return nil, nil
+	stmt, err := svc.preparer.PrepareContext(ctx, `SELECT * FROM (SELECT ROW_NUMBER() OVER `+
+		`(ORDER BY ua.row_id) as row_num, ua.user_account_id, ua.username, ua.created_at AS ua_created_at, `+
+		`u.user_id, u.first_name, u.last_name, u.created_at AS u_created_at FROM user_accounts ua JOIN users u ON `+
+		`ua.user_id = u.user_id) AS subquery WHERE row_num > ? LIMIT ?`)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(ctx context.Context, stmt Stmt, err *error) {
+		if closeErr := stmt.Close(ctx); closeErr != nil {
+			*err = closeErr
+		}
+	}(ctx, stmt, &err)
+
+	rows, err := stmt.QueryContext(ctx, opts.Offset(), opts.Limit())
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(closer io.Closer, err *error) {
+		if closeErr := rows.Close(); closeErr != nil {
+			*err = closeErr
+		}
+	}(rows, &err)
+
+	uaa := make([]*otelexample.UserAccount, 0, opts.Limit())
+
+	for rows.Next() {
+		var (
+			rowNumber     int64
+			createdAt     int64
+			userCreatedAt int64
+		)
+
+		ua := new(otelexample.UserAccount)
+		ua.User = new(otelexample.User)
+
+		err = rows.Scan(&rowNumber, &ua.ID, &ua.Username, &createdAt, &ua.User.ID, &ua.User.FirstName,
+			&ua.User.LastName, &userCreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		ua.CreatedAt, ua.User.CreatedAt = time.UnixMilli(createdAt), time.UnixMilli(userCreatedAt)
+
+		uaa = append(uaa, ua)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return uaa, nil
+}
+
+func (svc *UserAccountService) findUserAccountsHasNext(ctx context.Context, offset uint64) (bool, error) {
+	stmt, err := svc.preparer.PrepareContext(ctx, `SELECT EXISTS(SELECT 1 FROM (SELECT ROW_NUMBER() `+
+		`OVER (ORDER BY ua.row_id) as row_num FROM user_accounts ua) AS subquery WHERE row_num > ? LIMIT 1) `+
+		`AS has_next`)
+	if err != nil {
+		return false, err
+	}
+
+	defer func(ctx context.Context, stmt Stmt, err *error) {
+		if closeErr := stmt.Close(ctx); closeErr != nil {
+			*err = closeErr
+		}
+	}(ctx, stmt, &err)
+
+	var hasNext bool
+	if err = stmt.QueryRowContext(ctx, offset).Scan(&hasNext); err != nil {
+		return false, err
+	}
+
+	return hasNext, nil
 }
 
 // FindUserAccountByID returns user account by unique identifier.
@@ -150,9 +278,9 @@ func (svc *UserAccountService) FindUserAccountByID(
 	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(time.Second))
 	defer cancel()
 
-	stmt, err := svc.preparer.PrepareContext(ctx, `SELECT ua.username, ua.created_at, u.user_id, u.first_name, `+
-		`u.last_name, u.created_at FROM user_accounts as ua JOIN users as u ON ua.user_id = u.user_id `+
-		`WHERE ua.user_account_id = ?`)
+	stmt, err := svc.preparer.PrepareContext(ctx, `SELECT ua.username, ua.created_at AS ua_created_at, `+
+		`u.user_id, u.first_name, u.last_name, u.created_at AS u_created_at FROM user_accounts as ua JOIN users as u `+
+		`ON ua.user_id = u.user_id WHERE ua.user_account_id = ?`)
 	if err != nil {
 		return nil, fmt.Errorf("find user account by id: %w", err)
 	}

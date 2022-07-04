@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 
 	uberzap "go.uber.org/zap"
@@ -66,8 +67,7 @@ type Config struct {
 	*MonitorConfig
 	*PerconaConfig
 
-	LogLevel string
-
+	BaseURL  *url.URL
 	ZapLevel uberzap.AtomicLevel
 }
 
@@ -76,8 +76,6 @@ func NewConfig() *Config {
 		HTTPConfig:    NewHTTPConfig(),
 		MonitorConfig: NewMonitorConfig(),
 		PerconaConfig: NewPerconaConfig(),
-
-		LogLevel: "",
 
 		ZapLevel: uberzap.NewAtomicLevelAt(uberzap.ErrorLevel),
 	}
@@ -107,11 +105,15 @@ func (cfg *Config) parse() error {
 	var err error
 
 	if logLevel := os.Getenv("SERVER_LOG_LEVEL"); logLevel != "" {
-		cfg.LogLevel = logLevel
+		if cfg.ZapLevel, err = uberzap.ParseAtomicLevel(logLevel); err != nil {
+			return err
+		}
 	}
 
-	if cfg.ZapLevel, err = uberzap.ParseAtomicLevel(cfg.LogLevel); err != nil {
-		return err
+	if baseURL := os.Getenv("SERVER_BASE_URL"); baseURL != "" {
+		if cfg.BaseURL, err = url.Parse(baseURL); err != nil {
+			return err
+		}
 	}
 
 	return nil
