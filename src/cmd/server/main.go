@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/http"
 	v1 "github.com/morozovcookie/opentelemetry-prometheus-example/http/v1"
+	"github.com/morozovcookie/opentelemetry-prometheus-example/nanoid"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/zap"
 	uberzap "go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -94,7 +95,7 @@ func initLogger(config *Config) (*uberzap.Logger, error) {
 
 func initHTTPServer(be *backend) *http.Server {
 	router := chi.NewRouter()
-	router.Use(middleware.RealIP, middleware.RequestID, zap.HTTPHandler(be.logger.Named("http")))
+	router.Use(middleware.RealIP, nanoid.RequestID(be.identifierGenerator), zap.HTTPHandler(be.logger.Named("http")))
 
 	router.Mount(v1.UserAccountHandlerPathPrefix, v1.NewUserAccountHandler(be.config.BaseURL, be.userAccountService))
 
