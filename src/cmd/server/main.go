@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/morozovcookie/opentelemetry-prometheus-example/opentelemetry/metrics"
 	"log"
 	"os/signal"
 	"syscall"
@@ -95,7 +96,8 @@ func initLogger(config *Config) (*uberzap.Logger, error) {
 
 func initHTTPServer(be *backend) *http.Server {
 	router := chi.NewRouter()
-	router.Use(middleware.RealIP, nanoid.RequestID(be.identifierGenerator), zap.HTTPHandler(be.logger.Named("http")))
+	router.Use(metrics.HTTPHandler(be.meterProvider.Meter("http")), middleware.RealIP,
+		nanoid.RequestID(be.identifierGenerator), zap.HTTPHandler(be.logger.Named("http")))
 
 	router.Mount(v1.UserAccountHandlerPathPrefix, v1.NewUserAccountHandler(be.config.BaseURL, be.userAccountService))
 
@@ -104,7 +106,10 @@ func initHTTPServer(be *backend) *http.Server {
 
 func initMonitorServer(be *backend) *http.Server {
 	router := chi.NewRouter()
-	router.Use(middleware.RealIP, middleware.Logger, middleware.Recoverer)
+	router.Use(middleware.RealIP, nanoid.RequestID(be.identifierGenerator),
+		zap.HTTPHandler(be.logger.Named("monitor")))
+
+	router.HandleFunc("/metrics", be.prometheusExporter.ServeHTTP)
 
 	return http.NewServer(be.config.MonitorConfig.Address, router)
 }

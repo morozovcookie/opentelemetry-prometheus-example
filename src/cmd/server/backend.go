@@ -6,9 +6,12 @@ import (
 
 	otelexample "github.com/morozovcookie/opentelemetry-prometheus-example"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/nanoid"
+	"github.com/morozovcookie/opentelemetry-prometheus-example/opentelemetry/prometheus"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/percona"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/time"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/zap"
+	otelprom "go.opentelemetry.io/otel/exporters/prometheus"
+	"go.opentelemetry.io/otel/metric"
 	uberzap "go.uber.org/zap"
 )
 
@@ -21,6 +24,9 @@ type backend struct {
 
 	txBeginner percona.TxBeginner
 	preparer   percona.Preparer
+
+	prometheusExporter *otelprom.Exporter
+	meterProvider      metric.MeterProvider
 
 	userAccountService otelexample.UserAccountService
 }
@@ -37,6 +43,14 @@ func newBackend(config *Config, logger *uberzap.Logger) *backend {
 }
 
 func (be *backend) init(ctx context.Context) error {
+	var err error
+
+	if be.prometheusExporter, err = prometheus.NewExporter(); err != nil {
+		return fmt.Errorf("init backend: %w", err)
+	}
+
+	be.meterProvider = be.prometheusExporter.MeterProvider()
+
 	var (
 		perconaClient = percona.NewClient(be.config.PerconaConfig.Dsn)
 		perconaLogger = be.logger.Named("percona")
