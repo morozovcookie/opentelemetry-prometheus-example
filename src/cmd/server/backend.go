@@ -6,12 +6,14 @@ import (
 
 	otelexample "github.com/morozovcookie/opentelemetry-prometheus-example"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/nanoid"
+	"github.com/morozovcookie/opentelemetry-prometheus-example/opentelemetry/metrics"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/opentelemetry/prometheus"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/percona"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/time"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/zap"
 	otelprom "go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric"
+	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 	uberzap "go.uber.org/zap"
 )
 
@@ -51,17 +53,22 @@ func (be *backend) init(ctx context.Context) error {
 
 	be.meterProvider = be.prometheusExporter.MeterProvider()
 
-	var (
-		perconaClient = percona.NewClient(be.config.PerconaConfig.Dsn)
-		perconaLogger = be.logger.Named("percona")
-	)
+	var prepareTxBeginner percona.PrepareTxBeginner
+	{
+		perconaClient := percona.NewClient(be.config.PerconaConfig.Dsn)
+		if err := perconaClient.Connect(ctx); err != nil {
+			return fmt.Errorf("init backend: %w", err)
+		}
 
-	if err := perconaClient.Connect(ctx); err != nil {
-		return fmt.Errorf("init backend: %w", err)
+		prepareTxBeginner = metrics.NewPrepareTxBeginner(perconaClient, be.meterProvider.Meter("sql"),
+			semconv.DBSystemMySQL, semconv.DBNameKey.String(perconaClient.DBName()),
+			semconv.DBUserKey.String(perconaClient.DBUser()))
 	}
 
-	be.initPreparer(perconaClient, perconaLogger)
-	be.initTxBeginner(perconaClient, perconaLogger)
+	perconaLogger := be.logger.Named("percona")
+
+	be.initPreparer(prepareTxBeginner, perconaLogger)
+	be.initTxBeginner(prepareTxBeginner, perconaLogger)
 
 	be.initUserAccountService(perconaLogger)
 
@@ -78,7 +85,8 @@ func (be *backend) initTxBeginner(beginner percona.TxBeginner, logger *uberzap.L
 }
 
 func (be *backend) initPreparer(preparer percona.Preparer, logger *uberzap.Logger) {
-	be.preparer = zap.NewPreparer(preparer, logger)
+	be.preparer = preparer
+	be.preparer = zap.NewPreparer(be.preparer, logger)
 }
 
 func (be *backend) initIdentifierGenerator() {

@@ -45,10 +45,12 @@ type TxBeginner interface {
 	BeginTx(ctx context.Context, opts *sql.TxOptions) (Tx, error)
 }
 
-var (
-	_ TxBeginner = (*Client)(nil)
-	_ Preparer   = (*Client)(nil)
-)
+type PrepareTxBeginner interface {
+	Preparer
+	TxBeginner
+}
+
+var _ PrepareTxBeginner = (*Client)(nil)
 
 // Client represents an object for basic manipulation with Percona MySQL Database System.
 type Client struct {
