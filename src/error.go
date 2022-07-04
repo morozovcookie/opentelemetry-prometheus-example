@@ -14,6 +14,7 @@ const (
 	ErrorCodeOK       = ErrorCode("ok")
 	ErrorCodeInvalid  = ErrorCode("invalid")
 	ErrorCodeNotFound = ErrorCode("not_found")
+	ErrorCodeConflict = ErrorCode("conflict")
 	ErrorCodeInternal = ErrorCode("internal")
 )
 

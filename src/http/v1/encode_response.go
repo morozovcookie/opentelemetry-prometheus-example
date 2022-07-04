@@ -26,6 +26,7 @@ var mapErrorCodeToStatusCode = map[otelexample.ErrorCode]int{
 
 	otelexample.ErrorCodeInvalid:  http.StatusBadRequest,
 	otelexample.ErrorCodeNotFound: http.StatusNotFound,
+	otelexample.ErrorCodeConflict: http.StatusConflict,
 
 	otelexample.ErrorCodeInternal: http.StatusInternalServerError,
 }

@@ -58,6 +58,19 @@ func (svc *UserAccountService) CreateUserAccount(ctx context.Context, ua *otelex
 }
 
 func (svc *UserAccountService) createUserAccount(ctx context.Context, tx Tx, ua *otelexample.UserAccount) error {
+	exist, err := svc.checkUserAccountExistent(ctx, tx, ua.Username)
+	if err != nil {
+		return err
+	}
+
+	if exist {
+		return &otelexample.Error{
+			Code:    otelexample.ErrorCodeConflict,
+			Message: fmt.Sprintf(`user account with username "%s" already exist`, ua.Username),
+			Err:     nil,
+		}
+	}
+
 	if err := svc.createUserRow(ctx, tx, ua.User); err != nil {
 		return err
 	}
@@ -71,6 +84,27 @@ func (svc *UserAccountService) createUserAccount(ctx context.Context, tx Tx, ua 
 	}
 
 	return nil
+}
+
+func (svc *UserAccountService) checkUserAccountExistent(ctx context.Context, tx Tx, username string) (bool, error) {
+	stmt, err := tx.PrepareContext(ctx, `SELECT EXISTS(SELECT 1 FROM user_accounts ua WHERE ua.username = ?) `+
+		`AS is_exists`)
+	if err != nil {
+		return false, err
+	}
+
+	defer func(ctx context.Context, stmt Stmt, err *error) {
+		if closeErr := stmt.Close(ctx); closeErr != nil {
+			*err = closeErr
+		}
+	}(ctx, stmt, &err)
+
+	var exists bool
+	if err := stmt.QueryRowContext(ctx, username).Scan(&exists); err != nil {
+		return false, err
+	}
+
+	return exists, nil
 }
 
 func (svc *UserAccountService) createUserRow(ctx context.Context, tx Tx, user *otelexample.User) error {
