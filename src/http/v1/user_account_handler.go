@@ -60,14 +60,48 @@ func decodeCreateUserAccount(reader io.Reader) (*CreateUserAccountRequest, error
 	decoded := new(CreateUserAccountRequest)
 
 	if err := json.NewDecoder(reader).Decode(decoded); err != nil {
-		return nil, &otelexample.Error{
+		return nil, fmt.Errorf("decode CreateUserAccountRequest: %w", &otelexample.Error{
 			Code:    otelexample.ErrorCodeInvalid,
 			Message: "failed to decode request",
 			Err:     err,
+		})
+	}
+
+	for _, field := range []struct {
+		name string
+		val  string
+	}{
+		{
+			name: decoded.Username,
+			val:  "username",
+		},
+		{
+			name: decoded.FirstName,
+			val:  "firstName",
+		},
+		{
+			name: decoded.LastName,
+			val:  "lastName",
+		},
+	} {
+		if err := checkOnEmptyString(field.val, field.name); err != nil {
+			return nil, fmt.Errorf("decode CreateUserAccountRequest: %w", err)
 		}
 	}
 
 	return decoded, nil
+}
+
+func checkOnEmptyString(val, name string) error {
+	if val != "" {
+		return nil
+	}
+
+	return &otelexample.Error{
+		Code:    otelexample.ErrorCodeInvalid,
+		Message: fmt.Sprintf(`"%s" could not be emtpy`, name),
+		Err:     nil,
+	}
 }
 
 func (h *UserAccountHandler) handleCreateUserAccount(writer http.ResponseWriter, request *http.Request) {
