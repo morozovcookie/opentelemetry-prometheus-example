@@ -45,7 +45,7 @@ func HTTPHandler(registry prometheus.Registerer) func(next http.Handler) http.Ha
 			Help:        "measures the number of concurrent HTTP requests that are currently in-flight",
 			ConstLabels: nil,
 		},
-			[]string{"client_ip", "host", "method", "scheme", "status_code", "target", "user_agent"})
+			[]string{"host", "method", "status_code", "target", "client_ip", "scheme", "user_agent"})
 		requestDurationVec = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace:   "",
 			Subsystem:   "",
@@ -83,12 +83,22 @@ func HTTPHandler(registry prometheus.Registerer) func(next http.Handler) http.Ha
 			host, method, scheme, statusCode, ua := request.Host, request.Method, takeHTTPScheme(request),
 				strconv.Itoa(resp.statusCode), request.UserAgent()
 
-			requestCounterVec.
-				WithLabelValues(clientIP, host, method, scheme, statusCode, target, ua).
-				Inc()
+			labels := prometheus.Labels{
+				"host":        host,
+				"method":      method,
+				"status_code": statusCode,
+				"target":      target,
+			}
+
 			requestDurationVec.
-				WithLabelValues(host, method, statusCode, target).
+				With(labels).
 				Observe(elapsed.Seconds())
+
+			labels["client_ip"], labels["scheme"], labels["user_agent"] = clientIP, scheme, ua
+
+			requestCounterVec.
+				With(labels).
+				Inc()
 		})
 	}
 }

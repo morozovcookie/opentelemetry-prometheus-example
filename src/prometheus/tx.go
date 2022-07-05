@@ -24,7 +24,9 @@ func (tx *tx) PrepareContext(ctx context.Context, query string) (percona.Stmt, e
 	perconaStmt, err := tx.wrapped.PrepareContext(ctx, query)
 	if err != nil {
 		tx.errorsCounterVec.
-			WithLabelValues("PREPARE").
+			With(prometheus.Labels{
+				"operation": "PREPARE",
+			}).
 			Inc()
 
 		return nil, err
@@ -44,7 +46,9 @@ func (tx *tx) PrepareContext(ctx context.Context, query string) (percona.Stmt, e
 func (tx *tx) Commit() error {
 	if err := tx.wrapped.Commit(); err != nil {
 		tx.errorsCounterVec.
-			WithLabelValues("COMMIT").
+			With(prometheus.Labels{
+				"operation": "COMMIT",
+			}).
 			Inc()
 
 		return err
@@ -56,12 +60,14 @@ func (tx *tx) Commit() error {
 // Rollback aborts the transaction.
 func (tx *tx) Rollback() error {
 	tx.rollbacksCounterVec.
-		WithLabelValues().
+		With(nil).
 		Inc()
 
 	if err := tx.wrapped.Rollback(); err != nil {
 		tx.errorsCounterVec.
-			WithLabelValues("ROLLBACK").
+			With(prometheus.Labels{
+				"operation": "ROLLBACK",
+			}).
 			Inc()
 
 		return err

@@ -58,7 +58,9 @@ func (svc *PrepareTxBeginner) PrepareContext(ctx context.Context, query string) 
 	perconaStmt, err := svc.wrapped.PrepareContext(ctx, query)
 	if err != nil {
 		svc.errorsCounterVec.
-			WithLabelValues("PREPARE").
+			With(prometheus.Labels{
+				"operation": "PREPARE",
+			}).
 			Inc()
 
 		return nil, err
@@ -79,7 +81,9 @@ func (svc *PrepareTxBeginner) BeginTx(ctx context.Context, opts *sql.TxOptions) 
 	perconaTx, err := svc.wrapped.BeginTx(ctx, opts)
 	if err != nil {
 		svc.errorsCounterVec.
-			WithLabelValues("BEGIN").
+			With(prometheus.Labels{
+				"operation": "BEGIN",
+			}).
 			Inc()
 
 		return nil, err

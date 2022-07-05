@@ -32,13 +32,17 @@ func (stmt *stmt) ExecContext(ctx context.Context, args ...any) (sql.Result, err
 		result, err = stmt.wrapped.ExecContext(ctx, args...)
 	})
 
+	labels := prometheus.Labels{
+		"operation": stmt.operation,
+	}
+
 	stmt.queryDurationVec.
-		WithLabelValues(stmt.operation).
+		With(labels).
 		Observe(elapsed.Seconds())
 
 	if err != nil {
 		stmt.errorsCounterVec.
-			WithLabelValues(stmt.operation).
+			With(labels).
 			Inc()
 
 		return nil, err
@@ -55,13 +59,17 @@ func (stmt *stmt) QueryRowContext(ctx context.Context, args ...any) *sql.Row {
 		row = stmt.wrapped.QueryRowContext(ctx, args...)
 	})
 
+	labels := prometheus.Labels{
+		"operation": stmt.operation,
+	}
+
 	stmt.queryDurationVec.
-		WithLabelValues(stmt.operation).
+		With(labels).
 		Observe(elapsed.Seconds())
 
 	if err := row.Err(); err != nil {
 		stmt.errorsCounterVec.
-			WithLabelValues(stmt.operation).
+			With(labels).
 			Inc()
 	}
 
@@ -80,13 +88,17 @@ func (stmt *stmt) QueryContext(ctx context.Context, args ...any) (*sql.Rows, err
 		rows, err = stmt.wrapped.QueryContext(ctx, args...)
 	})
 
+	labels := prometheus.Labels{
+		"operation": stmt.operation,
+	}
+
 	stmt.queryDurationVec.
-		WithLabelValues(stmt.operation).
+		With(labels).
 		Observe(elapsed.Seconds())
 
 	if err != nil {
 		stmt.errorsCounterVec.
-			WithLabelValues(stmt.operation).
+			With(labels).
 			Inc()
 
 		return nil, err
