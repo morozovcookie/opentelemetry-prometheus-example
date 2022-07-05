@@ -58,16 +58,19 @@ func HTTPHandler(meter metric.Meter, attrs ...attribute.KeyValue) func(next http
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			resp := &response{
-				wrapped: writer,
+			var (
+				resp = &response{
+					wrapped: writer,
 
-				statusCode: http.StatusOK,
-			}
+					statusCode: http.StatusOK,
+				}
+				rattrs = attrs
+			)
 
 			userInfo := request.URL.User
 			request.URL.User = nil
 
-			attrs = append(attrs, semconv.HTTPURLKey.String(request.URL.String()),
+			rattrs = append(rattrs, semconv.HTTPURLKey.String(request.URL.String()),
 				semconv.HTTPTargetKey.String(request.URL.Path))
 
 			request.URL.User = userInfo
@@ -75,8 +78,6 @@ func HTTPHandler(meter metric.Meter, attrs ...attribute.KeyValue) func(next http
 			_, _, elapsed := trackOfTime(func() {
 				next.ServeHTTP(resp, request)
 			})
-
-			rattrs := attrs
 
 			if ua := request.UserAgent(); ua != "" {
 				rattrs = append(rattrs, semconv.HTTPUserAgentKey.String(ua))

@@ -19,7 +19,7 @@ COPY ./src/time ./time
 
 COPY ./src/cmd/server ./cmd/server
 
-COPY ./src/opentelemetry ./opentelemetry
+COPY ./src/prometheus ./prometheus
 COPY ./src/zap ./zap
 
 COPY ./src/percona ./percona

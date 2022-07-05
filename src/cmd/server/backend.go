@@ -6,14 +6,10 @@ import (
 
 	otelexample "github.com/morozovcookie/opentelemetry-prometheus-example"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/nanoid"
-	"github.com/morozovcookie/opentelemetry-prometheus-example/opentelemetry/metrics"
-	"github.com/morozovcookie/opentelemetry-prometheus-example/opentelemetry/prometheus"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/percona"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/time"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/zap"
-	otelprom "go.opentelemetry.io/otel/exporters/prometheus"
-	"go.opentelemetry.io/otel/metric"
-	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
+	"github.com/prometheus/client_golang/prometheus"
 	uberzap "go.uber.org/zap"
 )
 
@@ -21,14 +17,14 @@ type backend struct {
 	config *Config
 	logger *uberzap.Logger
 
+	registerer prometheus.Registerer
+	gatherer   prometheus.Gatherer
+
 	identifierGenerator otelexample.IdentifierGenerator
 	timer               otelexample.Timer
 
 	txBeginner percona.TxBeginner
 	preparer   percona.Preparer
-
-	prometheusExporter *otelprom.Exporter
-	meterProvider      metric.MeterProvider
 
 	userAccountService otelexample.UserAccountService
 }
@@ -45,13 +41,10 @@ func newBackend(config *Config, logger *uberzap.Logger) *backend {
 }
 
 func (be *backend) init(ctx context.Context) error {
-	var err error
+	registry := prometheus.NewRegistry()
+	be.registerer, be.gatherer = registry, registry
 
-	if be.prometheusExporter, err = prometheus.NewExporter(); err != nil {
-		return fmt.Errorf("init backend: %w", err)
-	}
-
-	be.meterProvider = be.prometheusExporter.MeterProvider()
+	be.registerer = prometheus.WrapRegistererWithPrefix("server_", be.registerer)
 
 	var prepareTxBeginner percona.PrepareTxBeginner
 	{
@@ -59,10 +52,7 @@ func (be *backend) init(ctx context.Context) error {
 		if err := perconaClient.Connect(ctx); err != nil {
 			return fmt.Errorf("init backend: %w", err)
 		}
-
-		prepareTxBeginner = metrics.NewPrepareTxBeginner(perconaClient, be.meterProvider.Meter("sql"),
-			semconv.DBSystemMySQL, semconv.DBNameKey.String(perconaClient.DBName()),
-			semconv.DBUserKey.String(perconaClient.DBUser()))
+		prepareTxBeginner = perconaClient
 	}
 
 	perconaLogger := be.logger.Named("percona")
@@ -91,8 +81,7 @@ func (be *backend) initPreparer(preparer percona.Preparer, logger *uberzap.Logge
 
 func (be *backend) initIdentifierGenerator() {
 	be.identifierGenerator = nanoid.NewIdentifierGenerator()
-	be.identifierGenerator = zap.NewIdentifierGenerator(be.identifierGenerator,
-		be.logger.Named("identifier_generator"))
+	be.identifierGenerator = zap.NewIdentifierGenerator(be.identifierGenerator, be.logger.Named("identifier_generator"))
 }
 
 func (be *backend) initTimer() {

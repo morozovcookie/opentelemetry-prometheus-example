@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/morozovcookie/opentelemetry-prometheus-example/opentelemetry/metrics"
 	"log"
 	"os/signal"
 	"syscall"
@@ -14,7 +13,10 @@ import (
 	"github.com/morozovcookie/opentelemetry-prometheus-example/http"
 	v1 "github.com/morozovcookie/opentelemetry-prometheus-example/http/v1"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/nanoid"
+	"github.com/morozovcookie/opentelemetry-prometheus-example/prometheus"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/zap"
+	prom "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	uberzap "go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
@@ -96,7 +98,7 @@ func initLogger(config *Config) (*uberzap.Logger, error) {
 
 func initHTTPServer(be *backend) *http.Server {
 	router := chi.NewRouter()
-	router.Use(metrics.HTTPHandler(be.meterProvider.Meter("http")), middleware.RealIP,
+	router.Use(prometheus.HTTPHandler(prom.WrapRegistererWithPrefix("http_", be.registerer)), middleware.RealIP,
 		nanoid.RequestID(be.identifierGenerator), zap.HTTPHandler(be.logger.Named("http")))
 
 	router.Mount(v1.UserAccountHandlerPathPrefix, v1.NewUserAccountHandler(be.config.BaseURL, be.userAccountService))
@@ -106,10 +108,9 @@ func initHTTPServer(be *backend) *http.Server {
 
 func initMonitorServer(be *backend) *http.Server {
 	router := chi.NewRouter()
-	router.Use(middleware.RealIP, nanoid.RequestID(be.identifierGenerator),
-		zap.HTTPHandler(be.logger.Named("monitor")))
+	router.Use(middleware.RealIP, nanoid.RequestID(be.identifierGenerator), zap.HTTPHandler(be.logger.Named("monitor")))
 
-	router.HandleFunc("/metrics", be.prometheusExporter.ServeHTTP)
+	router.Handle("/metrics", promhttp.HandlerFor(be.gatherer, promhttp.HandlerOpts{}))
 
 	return http.NewServer(be.config.MonitorConfig.Address, router)
 }
