@@ -13,13 +13,15 @@ var _ percona.PrepareTxBeginner = (*PrepareTxBeginner)(nil)
 type PrepareTxBeginner struct {
 	wrapped percona.PrepareTxBeginner
 	logger  *zap.Logger
+	fields  []zap.Field
 }
 
 // NewPrepareTxBeginner returns a new instance of PrepareTxBeginner.
-func NewPrepareTxBeginner(svc percona.PrepareTxBeginner, logger *zap.Logger) *PrepareTxBeginner {
+func NewPrepareTxBeginner(svc percona.PrepareTxBeginner, logger *zap.Logger, ff ...zap.Field) *PrepareTxBeginner {
 	return &PrepareTxBeginner{
 		wrapped: svc,
 		logger:  logger,
+		fields:  ff,
 	}
 }
 
@@ -28,20 +30,14 @@ func (svc *PrepareTxBeginner) PrepareContext(ctx context.Context, query string) 
 	var (
 		perconaStmt percona.Stmt
 		err         error
-
-		dbName = svc.wrapped.DBName()
-		dbUser = svc.wrapped.DBUser()
 	)
 
 	start, end, elapsed := trackOfTime(func() {
 		perconaStmt, err = svc.wrapped.PrepareContext(ctx, query)
 	})
 
-	ff := []zap.Field{
-		zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
-		zap.String("dbName", dbName), zap.String("dbUser", dbUser), zap.String("query", query),
-		zap.Error(err),
-	}
+	ff := append(svc.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+		zap.String("query", query), zap.Error(err))
 
 	svc.logger.Debug("prepare", ff...)
 
@@ -54,10 +50,9 @@ func (svc *PrepareTxBeginner) PrepareContext(ctx context.Context, query string) 
 	return &stmt{
 		wrapped: perconaStmt,
 		logger:  svc.logger.Named("stmt"),
+		fields:  svc.fields,
 
-		query:  query,
-		dbName: dbName,
-		dbUser: dbUser,
+		query: query,
 	}, nil
 }
 
@@ -66,20 +61,14 @@ func (svc *PrepareTxBeginner) BeginTx(ctx context.Context, opts *sql.TxOptions) 
 	var (
 		perconaTx percona.Tx
 		err       error
-
-		dbName = svc.wrapped.DBName()
-		dbUser = svc.wrapped.DBUser()
 	)
 
 	start, end, elapsed := trackOfTime(func() {
 		perconaTx, err = svc.wrapped.BeginTx(ctx, opts)
 	})
 
-	ff := []zap.Field{
-		zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
-		zap.String("dbName", dbName), zap.String("dbUser", dbUser), zap.Any("options", opts),
-		zap.Error(err),
-	}
+	ff := append(svc.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+		zap.Any("options", opts), zap.Error(err))
 
 	svc.logger.Debug("begin tx", ff...)
 
@@ -92,18 +81,6 @@ func (svc *PrepareTxBeginner) BeginTx(ctx context.Context, opts *sql.TxOptions) 
 	return &tx{
 		wrapped: perconaTx,
 		logger:  svc.logger.Named("tx"),
-
-		dbName: dbName,
-		dbUser: dbUser,
+		fields:  svc.fields,
 	}, nil
-}
-
-// DBName returns name of database which client are connected.
-func (svc *PrepareTxBeginner) DBName() string {
-	return svc.wrapped.DBName()
-}
-
-// DBUser returns name of user which connected to the database.
-func (svc *PrepareTxBeginner) DBUser() string {
-	return svc.wrapped.DBUser()
 }

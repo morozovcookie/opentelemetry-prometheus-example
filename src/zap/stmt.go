@@ -14,10 +14,9 @@ var _ percona.Stmt = (*stmt)(nil)
 type stmt struct {
 	wrapped percona.Stmt
 	logger  *zap.Logger
+	fields  []zap.Field
 
-	query  string
-	dbName string
-	dbUser string
+	query string
 }
 
 // ExecContext executes a prepared statement with the given arguments and
@@ -32,11 +31,8 @@ func (stmt *stmt) ExecContext(ctx context.Context, args ...any) (sql.Result, err
 		result, err = stmt.wrapped.ExecContext(ctx, args...)
 	})
 
-	ff := []zap.Field{
-		zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
-		zap.String("dbName", stmt.dbName), zap.String("dbUser", stmt.dbUser), zap.Any("args", args),
-		zap.String("query", stmt.query), zap.Error(err),
-	}
+	ff := append(stmt.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+		zap.Any("args", args), zap.String("query", stmt.query), zap.Error(err))
 
 	stmt.logger.Debug("exec", ff...)
 
@@ -57,11 +53,8 @@ func (stmt *stmt) QueryRowContext(ctx context.Context, args ...any) *sql.Row {
 		row = stmt.wrapped.QueryRowContext(ctx, args...)
 	})
 
-	ff := []zap.Field{
-		zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
-		zap.String("dbName", stmt.dbName), zap.String("dbUser", stmt.dbUser), zap.Any("args", args),
-		zap.String("query", stmt.query),
-	}
+	ff := append(stmt.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+		zap.Any("args", args), zap.String("query", stmt.query), zap.Error(row.Err()))
 
 	stmt.logger.Debug("query row", ff...)
 
@@ -80,11 +73,8 @@ func (stmt *stmt) QueryContext(ctx context.Context, args ...any) (*sql.Rows, err
 		rows, err = stmt.wrapped.QueryContext(ctx, args...)
 	})
 
-	ff := []zap.Field{
-		zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
-		zap.String("dbName", stmt.dbName), zap.String("dbUser", stmt.dbUser), zap.Any("args", args),
-		zap.String("query", stmt.query),
-	}
+	ff := append(stmt.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+		zap.Any("args", args), zap.String("query", stmt.query), zap.Error(err))
 
 	stmt.logger.Debug("query", ff...)
 
@@ -104,11 +94,8 @@ func (stmt *stmt) Close(ctx context.Context) error {
 		err = stmt.wrapped.Close(ctx)
 	})
 
-	ff := []zap.Field{
-		zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
-		zap.String("dbName", stmt.dbName), zap.String("dbUser", stmt.dbUser), zap.Error(err),
-		zap.String("query", stmt.query),
-	}
+	ff := append(stmt.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+		zap.Error(err), zap.String("query", stmt.query))
 
 	stmt.logger.Debug("close", ff...)
 

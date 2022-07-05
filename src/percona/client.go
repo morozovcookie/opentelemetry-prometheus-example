@@ -20,27 +20,14 @@ const (
 	PingTimeout = time.Millisecond * 100
 )
 
-// DBInfo represents a service for getting information about database.
-type DBInfo interface {
-	// DBName returns name of database which client are connected.
-	DBName() string
-
-	// DBUser returns name of user which connected to the database.
-	DBUser() string
-}
-
 // Preparer represents a service that can create a prepared statement.
 type Preparer interface {
-	DBInfo
-
 	// PrepareContext creates a prepared statement for later queries or executions.
 	PrepareContext(ctx context.Context, query string) (Stmt, error)
 }
 
 // TxBeginner represents a service that can start a transaction.
 type TxBeginner interface {
-	DBInfo
-
 	// BeginTx starts a transaction.
 	BeginTx(ctx context.Context, opts *sql.TxOptions) (Tx, error)
 }

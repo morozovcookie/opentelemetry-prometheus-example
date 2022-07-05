@@ -13,9 +13,7 @@ var _ percona.Tx = (*tx)(nil)
 type tx struct {
 	wrapped percona.Tx
 	logger  *zap.Logger
-
-	dbName string
-	dbUser string
+	fields  []zap.Field
 }
 
 // PrepareContext creates a prepared statement for later queries or executions.
@@ -29,11 +27,8 @@ func (tx *tx) PrepareContext(ctx context.Context, query string) (percona.Stmt, e
 		perconaStmt, err = tx.wrapped.PrepareContext(ctx, query)
 	})
 
-	ff := []zap.Field{
-		zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
-		zap.String("dbName", tx.dbName), zap.String("dbUser", tx.dbUser), zap.String("query", query),
-		zap.Error(err),
-	}
+	ff := append(tx.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+		zap.String("query", query), zap.Error(err))
 
 	tx.logger.Debug("prepare", ff...)
 
@@ -46,10 +41,9 @@ func (tx *tx) PrepareContext(ctx context.Context, query string) (percona.Stmt, e
 	return &stmt{
 		wrapped: perconaStmt,
 		logger:  tx.logger.Named("stmt"),
+		fields:  tx.fields,
 
-		query:  query,
-		dbName: tx.dbName,
-		dbUser: tx.dbUser,
+		query: query,
 	}, nil
 }
 
@@ -61,10 +55,8 @@ func (tx *tx) Commit() error {
 		err = tx.wrapped.Commit()
 	})
 
-	ff := []zap.Field{
-		zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
-		zap.String("dbName", tx.dbName), zap.String("dbUser", tx.dbUser), zap.Error(err),
-	}
+	ff := append(tx.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+		zap.Error(err))
 
 	tx.logger.Debug("commit", ff...)
 
@@ -85,10 +77,8 @@ func (tx *tx) Rollback() error {
 		err = tx.wrapped.Rollback()
 	})
 
-	ff := []zap.Field{
-		zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
-		zap.String("dbName", tx.dbName), zap.String("dbUser", tx.dbUser), zap.Error(err),
-	}
+	ff := append(tx.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+		zap.Error(err))
 
 	tx.logger.Debug("rollback", ff...)
 
