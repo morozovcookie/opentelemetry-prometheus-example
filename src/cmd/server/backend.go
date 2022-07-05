@@ -7,9 +7,10 @@ import (
 	otelexample "github.com/morozovcookie/opentelemetry-prometheus-example"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/nanoid"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/percona"
+	"github.com/morozovcookie/opentelemetry-prometheus-example/prometheus"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/time"
 	"github.com/morozovcookie/opentelemetry-prometheus-example/zap"
-	"github.com/prometheus/client_golang/prometheus"
+	prom "github.com/prometheus/client_golang/prometheus"
 	uberzap "go.uber.org/zap"
 )
 
@@ -17,8 +18,8 @@ type backend struct {
 	config *Config
 	logger *uberzap.Logger
 
-	registerer prometheus.Registerer
-	gatherer   prometheus.Gatherer
+	registerer prom.Registerer
+	gatherer   prom.Gatherer
 
 	identifierGenerator otelexample.IdentifierGenerator
 	timer               otelexample.Timer
@@ -40,10 +41,10 @@ func newBackend(config *Config, logger *uberzap.Logger) *backend {
 }
 
 func (be *backend) init(ctx context.Context) error {
-	registry := prometheus.NewRegistry()
+	registry := prom.NewRegistry()
 	be.registerer, be.gatherer = registry, registry
 
-	be.registerer = prometheus.WrapRegistererWithPrefix("server_", be.registerer)
+	be.registerer = prom.WrapRegistererWithPrefix("server_", be.registerer)
 
 	perconaLogger := be.logger.Named("percona")
 
@@ -62,8 +63,23 @@ func (be *backend) initPrepareTxBeginner(ctx context.Context, logger *uberzap.Lo
 		return err
 	}
 
+	var (
+		dbName = perconaClient.DBName()
+		dbUser = perconaClient.DBUser()
+	)
+
+	registerer := be.registerer
+	registerer = prom.WrapRegistererWithPrefix("sql_", registerer)
+	registerer = prom.WrapRegistererWith(prom.Labels{
+		"system": "mysql",
+		"user":   dbUser,
+		"name":   dbName,
+	}, registerer)
+
 	be.prepareTxBeginner = perconaClient
-	be.prepareTxBeginner = zap.NewPrepareTxBeginner(be.prepareTxBeginner, logger)
+	be.prepareTxBeginner = prometheus.NewPrepareTxBeginner(be.prepareTxBeginner, registerer)
+	be.prepareTxBeginner = zap.NewPrepareTxBeginner(be.prepareTxBeginner, logger, uberzap.String("dbName", dbName),
+		uberzap.String("dbUser", dbUser))
 
 	return nil
 }
