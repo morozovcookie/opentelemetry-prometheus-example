@@ -23,8 +23,7 @@ type backend struct {
 	identifierGenerator otelexample.IdentifierGenerator
 	timer               otelexample.Timer
 
-	txBeginner percona.TxBeginner
-	preparer   percona.Preparer
+	prepareTxBeginner percona.PrepareTxBeginner
 
 	userAccountService otelexample.UserAccountService
 }
@@ -46,37 +45,32 @@ func (be *backend) init(ctx context.Context) error {
 
 	be.registerer = prometheus.WrapRegistererWithPrefix("server_", be.registerer)
 
-	var prepareTxBeginner percona.PrepareTxBeginner
-	{
-		perconaClient := percona.NewClient(be.config.PerconaConfig.Dsn)
-		if err := perconaClient.Connect(ctx); err != nil {
-			return fmt.Errorf("init backend: %w", err)
-		}
-		prepareTxBeginner = perconaClient
-	}
-
 	perconaLogger := be.logger.Named("percona")
 
-	be.initPreparer(prepareTxBeginner, perconaLogger)
-	be.initTxBeginner(prepareTxBeginner, perconaLogger)
+	if err := be.initPrepareTxBeginner(ctx, perconaLogger); err != nil {
+		return fmt.Errorf("init backend: %w", err)
+	}
 
 	be.initUserAccountService(perconaLogger)
 
 	return nil
 }
 
+func (be *backend) initPrepareTxBeginner(ctx context.Context, logger *uberzap.Logger) error {
+	perconaClient := percona.NewClient(be.config.PerconaConfig.Dsn)
+	if err := perconaClient.Connect(ctx); err != nil {
+		return err
+	}
+
+	be.prepareTxBeginner = perconaClient
+	be.prepareTxBeginner = zap.NewPrepareTxBeginner(be.prepareTxBeginner, logger)
+
+	return nil
+}
+
 func (be *backend) initUserAccountService(logger *uberzap.Logger) {
-	be.userAccountService = percona.NewUserAccountService(be.txBeginner, be.preparer, be.identifierGenerator, be.timer)
+	be.userAccountService = percona.NewUserAccountService(be.prepareTxBeginner, be.identifierGenerator, be.timer)
 	be.userAccountService = zap.NewUserAccountService(be.userAccountService, logger.Named("user_account_svc"))
-}
-
-func (be *backend) initTxBeginner(beginner percona.TxBeginner, logger *uberzap.Logger) {
-	be.txBeginner = zap.NewTxBeginner(beginner, logger)
-}
-
-func (be *backend) initPreparer(preparer percona.Preparer, logger *uberzap.Logger) {
-	be.preparer = preparer
-	be.preparer = zap.NewPreparer(be.preparer, logger)
 }
 
 func (be *backend) initIdentifierGenerator() {

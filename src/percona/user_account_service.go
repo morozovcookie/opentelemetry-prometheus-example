@@ -13,8 +13,7 @@ import (
 
 // UserAccountService represents a service for managing UserAccount data.
 type UserAccountService struct {
-	txBeginner TxBeginner
-	preparer   Preparer
+	prepareTxBeginner PrepareTxBeginner
 
 	identifierGenerator otelexample.IdentifierGenerator
 	timer               otelexample.Timer
@@ -22,14 +21,12 @@ type UserAccountService struct {
 
 // NewUserAccountService returns a new instance of UserAccountService.
 func NewUserAccountService(
-	beginner TxBeginner,
-	preparer Preparer,
+	prepareTxBeginner PrepareTxBeginner,
 	identifierGenerator otelexample.IdentifierGenerator,
 	timer otelexample.Timer,
 ) *UserAccountService {
 	return &UserAccountService{
-		txBeginner: beginner,
-		preparer:   preparer,
+		prepareTxBeginner: prepareTxBeginner,
 
 		identifierGenerator: identifierGenerator,
 		timer:               timer,
@@ -41,7 +38,7 @@ func (svc *UserAccountService) CreateUserAccount(ctx context.Context, ua *otelex
 	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(time.Second))
 	defer cancel()
 
-	tx, err := svc.txBeginner.BeginTx(ctx, nil)
+	tx, err := svc.prepareTxBeginner.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("create user account: %w", err)
 	}
@@ -197,7 +194,7 @@ func (svc *UserAccountService) FindUserAccounts(
 }
 
 func (svc *UserAccountService) findUserAccountsCountTotal(ctx context.Context) (uint64, error) {
-	stmt, err := svc.preparer.PrepareContext(ctx, `SELECT count(1) FROM user_accounts`)
+	stmt, err := svc.prepareTxBeginner.PrepareContext(ctx, `SELECT count(1) FROM user_accounts`)
 	if err != nil {
 		return 0, err
 	}
@@ -224,7 +221,7 @@ func (svc *UserAccountService) findUserAccounts(
 	[]*otelexample.UserAccount,
 	error,
 ) {
-	stmt, err := svc.preparer.PrepareContext(ctx, `SELECT * FROM (SELECT ROW_NUMBER() OVER `+
+	stmt, err := svc.prepareTxBeginner.PrepareContext(ctx, `SELECT * FROM (SELECT ROW_NUMBER() OVER `+
 		`(ORDER BY ua.row_id) as row_num, ua.user_account_id, ua.username, ua.created_at AS ua_created_at, `+
 		`u.user_id, u.first_name, u.last_name, u.created_at AS u_created_at FROM user_accounts ua JOIN users u ON `+
 		`ua.user_id = u.user_id) AS subquery WHERE row_num > ? LIMIT ?`)
@@ -280,7 +277,7 @@ func (svc *UserAccountService) findUserAccounts(
 }
 
 func (svc *UserAccountService) findUserAccountsHasNext(ctx context.Context, offset uint64) (bool, error) {
-	stmt, err := svc.preparer.PrepareContext(ctx, `SELECT EXISTS(SELECT 1 FROM (SELECT ROW_NUMBER() `+
+	stmt, err := svc.prepareTxBeginner.PrepareContext(ctx, `SELECT EXISTS(SELECT 1 FROM (SELECT ROW_NUMBER() `+
 		`OVER (ORDER BY ua.row_id) as row_num FROM user_accounts ua) AS subquery WHERE row_num > ? LIMIT 1) `+
 		`AS has_next`)
 	if err != nil {
@@ -312,7 +309,7 @@ func (svc *UserAccountService) FindUserAccountByID(
 	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(time.Second))
 	defer cancel()
 
-	stmt, err := svc.preparer.PrepareContext(ctx, `SELECT ua.username, ua.created_at AS ua_created_at, `+
+	stmt, err := svc.prepareTxBeginner.PrepareContext(ctx, `SELECT ua.username, ua.created_at AS ua_created_at, `+
 		`u.user_id, u.first_name, u.last_name, u.created_at AS u_created_at FROM user_accounts as ua JOIN users as u `+
 		`ON ua.user_id = u.user_id WHERE ua.user_account_id = ?`)
 	if err != nil {
