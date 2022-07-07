@@ -23,6 +23,8 @@ const (
 
 var _ http.Handler = (*UserAccountHandler)(nil)
 
+// UserAccountHandler represents a controller for handling
+// operations with otelexample.UserAccount via HTTP requests.
 type UserAccountHandler struct {
 	http.Handler
 
@@ -31,6 +33,7 @@ type UserAccountHandler struct {
 	userAccountService otelexample.UserAccountService
 }
 
+// NewUserAccountHandler returns a new instance of UserAccountHandler.
 func NewUserAccountHandler(baseURL *url.URL, userAccountService otelexample.UserAccountService) *UserAccountHandler {
 	var (
 		router  = chi.NewRouter()
@@ -50,10 +53,17 @@ func NewUserAccountHandler(baseURL *url.URL, userAccountService otelexample.User
 	return handler
 }
 
+// CreateUserAccountRequest is the request body
+// for creating otelexample.UserAccount.
 type CreateUserAccountRequest struct {
-	Username  string `json:"username"`
+	// Username is the username.
+	Username string `json:"username"`
+
+	// FirstName is the user first name.
 	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
+
+	// LastName is the user last name.
+	LastName string `json:"lastName"`
 }
 
 func decodeCreateUserAccount(reader io.Reader) (*CreateUserAccountRequest, error) {
@@ -137,8 +147,13 @@ func (h *UserAccountHandler) handleCreateUserAccount(writer http.ResponseWriter,
 	encodeResponse(writer, http.StatusCreated, nil)
 }
 
+// FindUserAccountsRequest is the request parameters for
+// retrieve user accounts list.
 type FindUserAccountsRequest struct {
+	// Start is the count of records that should be skipped.
 	Start uint64
+
+	// Limit is the maximum records that should be returned.
 	Limit uint64
 }
 
@@ -173,12 +188,23 @@ func decodeFindUserAccountsRequest(request *http.Request) (*FindUserAccountsRequ
 	return decoded, nil
 }
 
+// FindUserAccountsResponse represents the result of user accounts search.
 type FindUserAccountsResponse struct {
-	Links *Links         `json:"_links"`
-	Start uint64         `json:"start"`
-	Limit uint64         `json:"limit"`
-	Total uint64         `json:"total"`
-	Data  []*UserAccount `json:"data"`
+	// Links is the set of links for dynamic navigation.
+	Links *Links `json:"_links"`
+
+	// Start is the count of records that should be skipped.
+	Start uint64 `json:"start"`
+
+	// Limit is the maximum records that should be returned.
+	Limit uint64 `json:"limit"`
+
+	// Total is the count of records that matches of request
+	// without pagination parameters.
+	Total uint64 `json:"total"`
+
+	// Data is the list of user accounts that was found.
+	Data []*UserAccount `json:"data"`
 }
 
 func newFindUserAccountsResponse(
@@ -243,7 +269,9 @@ func (h *UserAccountHandler) handleFindUserAccounts(writer http.ResponseWriter, 
 	encodeResponse(writer, http.StatusOK, response)
 }
 
+// FindUserAccountRequest is the request parameters for retrieve a single user account.
 type FindUserAccountRequest struct {
+	// ID is the user account unique identifier.
 	ID otelexample.ID
 }
 
@@ -253,21 +281,40 @@ func decodeFindUserAccountRequest(request *http.Request) *FindUserAccountRequest
 	}
 }
 
+// User describes the real person.
 type User struct {
-	ID        string `json:"id"`
+	// CreatedAt is the time when user was created.
+	CreatedAt int64 `json:"createdAt"`
+
+	// ID is the usr unique identifier.
+	ID string `json:"id"`
+
+	// FirstName is the user first name.
 	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	CreatedAt int64  `json:"createdAt"`
+
+	// LastName is the user last name.
+	LastName string `json:"lastName"`
 }
 
+// UserAccount is the user account in the system.
 type UserAccount struct {
-	Link      *SelfLink `json:"_links"`
-	User      *User     `json:"user"`
-	CreatedAt int64     `json:"createdAt"`
-	ID        string    `json:"id"`
-	Username  string    `json:"username"`
+	// Link is the link to the object themselves.
+	Link *SelfLink `json:"_links"`
+
+	// User is the person who owned the account.
+	User *User `json:"user"`
+
+	// CreatedAt is the time when user account was created.
+	CreatedAt int64 `json:"createdAt"`
+
+	// ID is the user account unique identifier.
+	ID string `json:"id"`
+
+	// Username is the user account name.
+	Username string `json:"username"`
 }
 
+// FindUserAccountResponse represents the result of user account search.
 type FindUserAccountResponse struct {
 	*UserAccount
 }

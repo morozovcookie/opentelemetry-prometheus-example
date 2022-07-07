@@ -7,15 +7,22 @@ import (
 	otelexample "github.com/morozovcookie/opentelemetry-prometheus-example"
 )
 
+// SelfLink is the link to the object themselves.
 type SelfLink struct {
 	Self string `json:"self"`
 }
 
+// Links is the set of links for dynamic navigation.
 type Links struct {
 	*SelfLink
 
+	// Base is the general link to API.
 	Base string `json:"base"`
+
+	// Next is the link to the next set of objects.
 	Next string `json:"next,omitempty"`
+
+	// Prev is the link to the previous set of objects.
 	Prev string `json:"prev,omitempty"`
 }
 
