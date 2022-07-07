@@ -1,15 +1,29 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Title",
-    "description": "Title",
+    "title": "opentelemetry-prometheus-example",
+    "description": "Application demonstrates setting up monitoring with Prometheus",
     "version": "1.0.0"
   },
-  "servers": [],
   "paths": {
     "/api/v1/user-accounts": {
       "summary": "Method for interact with collection of user account",
-      "$ref": "./paths/UserAccounts/user-accounts.json"
+      "$ref": "./paths/user_accounts.json"
+    },
+    "/api/v1/user-accounts/{userAccountId}": {
+      "summary": "Method for interact with single user account",
+      "$ref": "./paths/user_account.json"
+    }
+  },
+  "components": {
+    "parameters": {
+      "$ref": "./components/parameters/_index.json"
+    },
+    "responses": {
+      "$ref": "./components/responses/_index.json"
+    },
+    "schemas": {
+      "$ref": "./components/schemas/_index.json"
     }
   }
 }

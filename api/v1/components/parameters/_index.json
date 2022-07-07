@@ -1,0 +1,11 @@
+{
+  "UserAccountId": {
+    "$ref": "./path/user_account_id.json"
+  },
+  "Limit": {
+    "$ref": "./query/limit.json"
+  },
+  "Start": {
+    "$ref": "./query/start.json"
+  }
+}

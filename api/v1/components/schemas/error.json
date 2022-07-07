@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "description": "HTTP API error",
+  "properties": {
+    "code": {
+      "type": "string",
+      "enum": [
+        "invalid",
+        "not_found",
+        "conflict",
+        "internal"
+      ],
+      "default": "internal"
+    },
+    "message": {
+      "type": "message",
+      "default": "an internal error has occurred"
+    }
+  },
+  "required": [
+    "code",
+    "message"
+  ]
+}

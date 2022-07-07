@@ -1,0 +1,10 @@
+{
+  "name": "limit",
+  "in": "query",
+  "required": false,
+  "description": "The maximum records that should be returned",
+  "schema": {
+    "$ref": "./../../schemas/_index.json#/Limit"
+  },
+  "allowEmptyValue": true
+}

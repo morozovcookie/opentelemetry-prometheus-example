@@ -1,0 +1,147 @@
+{
+  "get": {
+    "summary": "Returns a list of user accounts",
+    "parameters": [
+      {
+        "$ref": "./../components/parameters/_index.json#/Start"
+      },
+      {
+        "$ref": "./../components/parameters/_index.json#/Limit"
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "_links": {
+                  "$ref": "./../components/schemas/_index.json#/Links"
+                },
+                "start": {
+                  "$ref": "./../components/schemas/_index.json#/Start"
+                },
+                "limit": {
+                  "$ref": "./../components/schemas/_index.json#/Limit"
+                },
+                "total": {
+                  "$ref": "./../components/schemas/_index.json#/Total"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "./../components/schemas/_index.json#/UserAccount"
+                  },
+                  "minItems": 0,
+                  "maxItems": 100,
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "_links",
+                "start",
+                "limit",
+                "total",
+                "data"
+              ]
+            },
+            "example": {
+              "_links": {
+                "self": "https://example.com/api/v1/user-accounts",
+                "base": "https://example.com"
+              },
+              "start": 0,
+              "limit": 20,
+              "total": 1,
+              "data": [
+                {
+                  "_links": {
+                    "self": "https://example.com/api/v1/user-accounts/rz7xrtt7k01j28uxlzfgnzlsq7xsy899jy5kf7us1v5rm6sef2g5teffi706v88j"
+                  },
+                  "user": {
+                    "createdAt": 1657191948675,
+                    "id": "eru7eivh4ffylc6vnm9yvews0ay1b8c16yvvfd754icmf62ocugux2url4lkuj52",
+                    "firstName": "Mary",
+                    "lastName": "Bennett"
+                  },
+                  "createdAt": 1657191948675,
+                  "id": "rz7xrtt7k01j28uxlzfgnzlsq7xsy899jy5kf7us1v5rm6sef2g5teffi706v88j",
+                  "username": "marybennett"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "400": {
+        "$ref": "./../components/responses/_index.json#/400"
+      },
+      "500": {
+        "$ref": "./../components/responses/_index.json#/500"
+      }
+    },
+    "tags": [
+      "User Account"
+    ]
+  },
+  "post": {
+    "summary": "Creates a new user account",
+    "requestBody": {
+      "description": "",
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "username": {
+                "type": "string",
+                "description": "The user account name",
+                "minLength": 1
+              },
+              "firstName": {
+                "type": "string",
+                "description": "The user first name",
+                "minLength": 1
+              },
+              "lastName": {
+                "type": "string",
+                "description": "The user last name",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "username",
+              "firstName",
+              "lastName"
+            ]
+          },
+          "example": {
+            "username": "marybennett",
+            "firstName": "Mary",
+            "lastName:": "Bennett"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "201": {
+        "description": "User account successfully created"
+      },
+      "400": {
+        "$ref": "./../components/responses/_index.json#/400"
+      },
+      "409": {
+        "description": "User account with the same username already exist"
+      },
+      "500": {
+        "$ref": "./../components/responses/_index.json#/500"
+      }
+    },
+    "tags": [
+      "User Account"
+    ]
+  }
+}

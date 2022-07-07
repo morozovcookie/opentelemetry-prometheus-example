@@ -1,0 +1,6 @@
+{
+  "type": "string",
+  "description": "unique identifier",
+  "pattern": "^[0-9a-z]{64}$",
+  "example": "rz7xrtt7k01j28uxlzfgnzlsq7xsy899jy5kf7us1v5rm6sef2g5teffi706v88j"
+}

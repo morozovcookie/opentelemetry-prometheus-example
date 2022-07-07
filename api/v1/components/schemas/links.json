@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "properties": {
+    "self": {
+      "description": "The link to the object themselves",
+      "$ref": "./link.json"
+    },
+    "base": {
+      "description": "The general link to API",
+      "$ref": "./link.json"
+    },
+    "next": {
+      "description": "The link to the next set of objects",
+      "$ref": "./link.json"
+    },
+    "prev": {
+      "description": "The link to the previous set of objects",
+      "$ref": "./link.json"
+    }
+  },
+  "required": [
+    "self",
+    "base"
+  ]
+}

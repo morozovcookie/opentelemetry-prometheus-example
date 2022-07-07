@@ -1,0 +1,29 @@
+{
+  "Error": {
+    "$ref": "./error.json"
+  },
+  "Id": {
+    "$ref": "./id.json"
+  },
+  "Limit": {
+    "$ref": "./limit.json"
+  },
+  "Link": {
+    "$ref": "./link.json"
+  },
+  "Links": {
+    "$ref": "./links.json"
+  },
+  "SelfLink": {
+    "$ref": "./self_link.json"
+  },
+  "Start": {
+    "$ref": "./start.json"
+  },
+  "Total": {
+    "$ref": "./total.json"
+  },
+  "UserAccount": {
+    "$ref": "./user_account.json"
+  }
+}

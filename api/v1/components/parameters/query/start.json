@@ -1,0 +1,10 @@
+{
+  "name": "start",
+  "in": "query",
+  "required": false,
+  "description": "The count of records that should be skipped",
+  "schema": {
+    "$ref": "./../../schemas/_index.json#/Start"
+  },
+  "allowEmptyValue": true
+}

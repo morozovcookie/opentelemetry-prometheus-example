@@ -1,0 +1,9 @@
+{
+  "name": "userAccountId",
+  "in": "path",
+  "required": true,
+  "description": "The user account unique identifier",
+  "schema": {
+    "$ref": "./../../schemas/_index.json#/Id"
+  }
+}

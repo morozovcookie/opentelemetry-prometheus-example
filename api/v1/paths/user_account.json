@@ -1,0 +1,56 @@
+{
+  "get": {
+    "summary": "Returns a single user account",
+    "parameters": [
+      {
+        "$ref": "./../components/parameters/_index.json#/UserAccountId"
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "User account successfully found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "./../components/schemas/_index.json#/UserAccount"
+            },
+            "example": {
+              "_links": {
+                "self": "https://example.com/api/v1/user-accounts/rz7xrtt7k01j28uxlzfgnzlsq7xsy899jy5kf7us1v5rm6sef2g5teffi706v88j"
+              },
+              "user": {
+                "createdAt": 1657191948675,
+                "id": "eru7eivh4ffylc6vnm9yvews0ay1b8c16yvvfd754icmf62ocugux2url4lkuj52",
+                "firstName": "Mary",
+                "lastName": "Bennett"
+              },
+              "createdAt": 1657191948675,
+              "id": "rz7xrtt7k01j28uxlzfgnzlsq7xsy899jy5kf7us1v5rm6sef2g5teffi706v88j",
+              "username": "marybennett"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "User account does not exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "./../components/schemas/_index.json#/Error"
+            },
+            "example": {
+              "code": "not_found",
+              "message": "user account with identifier rz7xrtt7k01j28uxlzfgnzlsq7xsy899jy5kf7us1v5rm6sef2g5teffi706v88j does not exist"
+            }
+          }
+        }
+      },
+      "500": {
+        "$ref": "./../components/responses/_index.json#/500"
+      }
+    },
+    "tags": [
+      "User Account"
+    ]
+  }
+}

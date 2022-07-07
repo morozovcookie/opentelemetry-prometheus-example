@@ -1,0 +1,7 @@
+{
+  "type": "integer",
+  "description": "The count of records that matches of request without pagination parameters.",
+  "format": "int64",
+  "minimum": 0,
+  "default": 0
+}

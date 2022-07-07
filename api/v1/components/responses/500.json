@@ -1,0 +1,14 @@
+{
+  "description": "Unexpected error",
+  "content": {
+    "application/json": {
+      "schema": {
+        "$ref": "./../schemas/_index.json#/Error"
+      },
+      "example": {
+        "code": "internal",
+        "message": "an internal error has occurred"
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "description": "Invalid request",
+  "content": {
+    "application/json": {
+      "schema": {
+        "$ref": "./../schemas/_index.json#/Error"
+      },
+      "example": {
+        "code": "invalid",
+        "message": "failed to decode request"
+      }
+    }
+  }
+}

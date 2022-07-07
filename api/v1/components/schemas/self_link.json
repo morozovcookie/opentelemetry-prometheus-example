@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "properties": {
+    "self": {
+      "description": "The link to the object themselves",
+      "$ref": "./link.json"
+    }
+  },
+  "required": [
+    "self"
+  ]
+}

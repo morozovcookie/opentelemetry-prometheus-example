@@ -1,0 +1,48 @@
+{
+  "description": "User account in the ssytem",
+  "type": "object",
+  "properties": {
+    "_links": {
+      "description": "The link to the object themselves",
+      "$ref": "./self_link.json"
+    },
+    "user": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "description": "The time when user was created",
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "description": "The user unique identifier",
+          "$ref": "./id.json"
+        },
+        "firstName": {
+          "description": "The user first name",
+          "type": "string",
+          "minLength": 1
+        },
+        "lastName": {
+          "description": "The user last name",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "createdAt": {
+      "description": "The time when user account was created",
+      "type": "integer",
+      "format": "int64"
+    },
+    "id": {
+      "description": "The user account unique identifier",
+      "$ref": "./id.json"
+    },
+    "username": {
+      "description": "The user account name",
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
