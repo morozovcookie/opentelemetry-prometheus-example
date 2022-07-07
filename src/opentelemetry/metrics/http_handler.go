@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/instrument"
+	"go.opentelemetry.io/otel/metric/instrument/syncint64"
 	"go.opentelemetry.io/otel/metric/unit"
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 )
@@ -56,12 +57,19 @@ func HTTPHandler(meter metric.Meter, attrs ...attribute.KeyValue) func(next http
 		panic(err)
 	}
 
+	return httpHandler(requestCount, requestDuration, attrs...)
+}
+
+func httpHandler(
+	counter syncint64.Counter,
+	histogram syncint64.Histogram,
+	attrs ...attribute.KeyValue,
+) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			var (
 				resp = &response{
-					wrapped: writer,
-
+					wrapped:    writer,
 					statusCode: http.StatusOK,
 				}
 				rattrs = attrs
@@ -109,10 +117,8 @@ func HTTPHandler(meter metric.Meter, attrs ...attribute.KeyValue) func(next http
 			rattrs = append(rattrs, semconv.HTTPMethodKey.String(request.Method), schema,
 				semconv.HTTPClientIPKey.String(clientIP), semconv.HTTPStatusCodeKey.Int(resp.statusCode))
 
-			ctx := request.Context()
-
-			requestCount.Add(ctx, 1, rattrs...)
-			requestDuration.Record(ctx, elapsed.Milliseconds(), rattrs...)
+			counter.Add(request.Context(), 1, rattrs...)
+			histogram.Record(request.Context(), elapsed.Milliseconds(), rattrs...)
 		})
 	}
 }

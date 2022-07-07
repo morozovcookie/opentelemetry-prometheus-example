@@ -27,7 +27,8 @@ func (tx *tx) PrepareContext(ctx context.Context, query string) (percona.Stmt, e
 		perconaStmt, err = tx.wrapped.PrepareContext(ctx, query)
 	})
 
-	ff := append(tx.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+	ff := tx.fields
+	ff = append(ff, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
 		zap.String("query", query), zap.Error(err))
 
 	tx.logger.Debug("prepare", ff...)
@@ -55,7 +56,8 @@ func (tx *tx) Commit() error {
 		err = tx.wrapped.Commit()
 	})
 
-	ff := append(tx.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+	ff := tx.fields
+	ff = append(ff, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
 		zap.Error(err))
 
 	tx.logger.Debug("commit", ff...)
@@ -77,7 +79,8 @@ func (tx *tx) Rollback() error {
 		err = tx.wrapped.Rollback()
 	})
 
-	ff := append(tx.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+	ff := tx.fields
+	ff = append(ff, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
 		zap.Error(err))
 
 	tx.logger.Debug("rollback", ff...)

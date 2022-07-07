@@ -59,6 +59,13 @@ func HTTPHandler(registry prometheus.Registerer) func(next http.Handler) http.Ha
 
 	registry.MustRegister(requestCounterVec, requestDurationVec)
 
+	return httpHandler(requestCounterVec, requestDurationVec)
+}
+
+func httpHandler(
+	counter *prometheus.CounterVec,
+	histogram *prometheus.HistogramVec,
+) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			resp := &response{
@@ -90,13 +97,13 @@ func HTTPHandler(registry prometheus.Registerer) func(next http.Handler) http.Ha
 				"target":      target,
 			}
 
-			requestDurationVec.
+			histogram.
 				With(labels).
 				Observe(elapsed.Seconds())
 
 			labels["client_ip"], labels["scheme"], labels["user_agent"] = clientIP, scheme, ua
 
-			requestCounterVec.
+			counter.
 				With(labels).
 				Inc()
 		})

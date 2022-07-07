@@ -77,6 +77,7 @@ func NewConfig() *Config {
 		MonitorConfig: NewMonitorConfig(),
 		PerconaConfig: NewPerconaConfig(),
 
+		BaseURL:  nil,
 		ZapLevel: uberzap.NewAtomicLevelAt(uberzap.ErrorLevel),
 	}
 }

@@ -50,12 +50,14 @@ func newLinks(baseURL *url.URL, pathPrefix string, opts otelexample.FindOptions,
 		limit = opts.Limit()
 	)
 
+	const decimal = 10
+
 	if limit != otelexample.DefaultPageSize {
-		query.Set("limit", strconv.FormatUint(limit, 10))
+		query.Set("limit", strconv.FormatUint(limit, decimal))
 	}
 
 	if offset > 0 && offset > limit {
-		query.Set("start", strconv.FormatUint(offset-limit, 10))
+		query.Set("start", strconv.FormatUint(offset-limit, decimal))
 	}
 
 	if offset > 0 {
@@ -64,7 +66,7 @@ func newLinks(baseURL *url.URL, pathPrefix string, opts otelexample.FindOptions,
 	}
 
 	if hasNext {
-		query.Set("start", strconv.FormatUint(offset+limit, 10))
+		query.Set("start", strconv.FormatUint(offset+limit, decimal))
 
 		selfLink.RawQuery = query.Encode()
 		links.Next = selfLink.RequestURI()

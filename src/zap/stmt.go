@@ -31,7 +31,8 @@ func (stmt *stmt) ExecContext(ctx context.Context, args ...any) (sql.Result, err
 		result, err = stmt.wrapped.ExecContext(ctx, args...)
 	})
 
-	ff := append(stmt.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+	ff := stmt.fields
+	ff = append(ff, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
 		zap.Any("args", args), zap.String("query", stmt.query), zap.Error(err))
 
 	stmt.logger.Debug("exec", ff...)
@@ -53,7 +54,8 @@ func (stmt *stmt) QueryRowContext(ctx context.Context, args ...any) *sql.Row {
 		row = stmt.wrapped.QueryRowContext(ctx, args...)
 	})
 
-	ff := append(stmt.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+	ff := stmt.fields
+	ff = append(ff, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
 		zap.Any("args", args), zap.String("query", stmt.query), zap.Error(row.Err()))
 
 	stmt.logger.Debug("query row", ff...)
@@ -73,7 +75,8 @@ func (stmt *stmt) QueryContext(ctx context.Context, args ...any) (*sql.Rows, err
 		rows, err = stmt.wrapped.QueryContext(ctx, args...)
 	})
 
-	ff := append(stmt.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+	ff := stmt.fields
+	ff = append(ff, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
 		zap.Any("args", args), zap.String("query", stmt.query), zap.Error(err))
 
 	stmt.logger.Debug("query", ff...)
@@ -94,7 +97,8 @@ func (stmt *stmt) Close(ctx context.Context) error {
 		err = stmt.wrapped.Close(ctx)
 	})
 
-	ff := append(stmt.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+	ff := stmt.fields
+	ff = append(ff, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
 		zap.Error(err), zap.String("query", stmt.query))
 
 	stmt.logger.Debug("close", ff...)

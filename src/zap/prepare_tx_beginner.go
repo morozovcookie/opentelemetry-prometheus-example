@@ -36,7 +36,8 @@ func (svc *PrepareTxBeginner) PrepareContext(ctx context.Context, query string) 
 		perconaStmt, err = svc.wrapped.PrepareContext(ctx, query)
 	})
 
-	ff := append(svc.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+	ff := svc.fields
+	ff = append(ff, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
 		zap.String("query", query), zap.Error(err))
 
 	svc.logger.Debug("prepare", ff...)
@@ -67,7 +68,8 @@ func (svc *PrepareTxBeginner) BeginTx(ctx context.Context, opts *sql.TxOptions) 
 		perconaTx, err = svc.wrapped.BeginTx(ctx, opts)
 	})
 
-	ff := append(svc.fields, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
+	ff := svc.fields
+	ff = append(ff, zap.Stringer("start", start), zap.Stringer("end", end), zap.Stringer("elapsed", elapsed),
 		zap.Any("options", opts), zap.Error(err))
 
 	svc.logger.Debug("begin tx", ff...)

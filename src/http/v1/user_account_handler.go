@@ -109,7 +109,7 @@ func checkOnEmptyString(val, name string) error {
 
 	return &otelexample.Error{
 		Code:    otelexample.ErrorCodeInvalid,
-		Message: fmt.Sprintf(`"%s" could not be emtpy`, name),
+		Message: fmt.Sprintf(`"%s" could not be empty`, name),
 		Err:     nil,
 	}
 }
@@ -165,8 +165,13 @@ func decodeFindUserAccountsRequest(request *http.Request) (*FindUserAccountsRequ
 		err error
 	)
 
+	const (
+		decimal    = 10
+		uint64Size = 64
+	)
+
 	if start := queryArgs.Get("start"); start != "" {
-		if decoded.Start, err = strconv.ParseUint(start, 10, 64); err != nil {
+		if decoded.Start, err = strconv.ParseUint(start, decimal, uint64Size); err != nil {
 			return nil, &otelexample.Error{
 				Code:    otelexample.ErrorCodeInvalid,
 				Message: "failed to parse start value",
@@ -176,7 +181,7 @@ func decodeFindUserAccountsRequest(request *http.Request) (*FindUserAccountsRequ
 	}
 
 	if limit := queryArgs.Get("limit"); limit != "" {
-		if decoded.Limit, err = strconv.ParseUint(limit, 10, 64); err != nil {
+		if decoded.Limit, err = strconv.ParseUint(limit, decimal, uint64Size); err != nil {
 			return nil, &otelexample.Error{
 				Code:    otelexample.ErrorCodeInvalid,
 				Message: "failed to parse limit value",
@@ -191,7 +196,7 @@ func decodeFindUserAccountsRequest(request *http.Request) (*FindUserAccountsRequ
 // FindUserAccountsResponse represents the result of user accounts search.
 type FindUserAccountsResponse struct {
 	// Links is the set of links for dynamic navigation.
-	Links *Links `json:"_links"`
+	Links *Links `json:"_links"` // nolint:tagliatelle
 
 	// Start is the count of records that should be skipped.
 	Start uint64 `json:"start"`
@@ -299,7 +304,7 @@ type User struct {
 // UserAccount is the user account in the system.
 type UserAccount struct {
 	// Link is the link to the object themselves.
-	Link *SelfLink `json:"_links"`
+	Link *SelfLink `json:"_links"` // nolint:tagliatelle
 
 	// User is the person who owned the account.
 	User *User `json:"user"`

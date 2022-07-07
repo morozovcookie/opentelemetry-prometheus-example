@@ -110,7 +110,9 @@ func initMonitorServer(be *backend) *http.Server {
 	router := chi.NewRouter()
 	router.Use(middleware.RealIP, nanoid.RequestID(be.identifierGenerator), zap.HTTPHandler(be.logger.Named("monitor")))
 
-	router.Handle("/metrics", promhttp.HandlerFor(be.gatherer, promhttp.HandlerOpts{}))
+	var promOpts promhttp.HandlerOpts
+
+	router.Handle("/metrics", promhttp.HandlerFor(be.gatherer, promOpts))
 
 	return http.NewServer(be.config.MonitorConfig.Address, router)
 }

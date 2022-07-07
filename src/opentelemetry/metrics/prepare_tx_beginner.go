@@ -3,13 +3,13 @@ package metrics
 import (
 	"context"
 	"database/sql"
-	"go.opentelemetry.io/otel/metric/instrument"
-	"go.opentelemetry.io/otel/metric/unit"
 
 	"github.com/morozovcookie/opentelemetry-prometheus-example/percona"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/metric/instrument"
 	"go.opentelemetry.io/otel/metric/instrument/syncint64"
+	"go.opentelemetry.io/otel/metric/unit"
 )
 
 var _ percona.PrepareTxBeginner = (*PrepareTxBeginner)(nil)
@@ -89,14 +89,4 @@ func (svc *PrepareTxBeginner) PrepareContext(ctx context.Context, query string) 
 		queryDuration: svc.queryDuration,
 		attrs:         svc.attrs,
 	}, nil
-}
-
-// DBName returns name of database which client are connected.
-func (svc *PrepareTxBeginner) DBName() string {
-	return svc.wrapped.DBName()
-}
-
-// DBUser returns name of user which connected to the database.
-func (svc *PrepareTxBeginner) DBUser() string {
-	return svc.wrapped.DBUser()
 }

@@ -178,6 +178,7 @@ func (svc *UserAccountService) FindUserAccounts(
 	)
 
 	result.Options = opts
+
 	if result.Total, err = svc.findUserAccountsCountTotal(ctx); err != nil {
 		return nil, fmt.Errorf("find user accounts: %w", err)
 	}

@@ -15,8 +15,9 @@ import (
 
 func NewExporter() (*prometheus.Exporter, error) {
 	var (
-		config = prometheus.Config{}
-		ctrl   = controller.New(
+		config prometheus.Config
+
+		ctrl = controller.New(
 			processor.NewFactory(
 				selector.NewWithHistogramDistribution(
 					histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
