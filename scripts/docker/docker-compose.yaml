@@ -2,7 +2,17 @@ version: '3'
 networks:
   percona:
     external: false
+  server:
+    external: false
+  prometheus:
+    external: false
 volumes:
+  prometheus:
+    driver: local
+  grafana-lib:
+    driver: local
+  grafana-log:
+    driver: local
   percona:
     driver: local
 services:
@@ -39,7 +49,7 @@ services:
       context: ./../..
       dockerfile: ./scripts/docker/swagger/Dockerfile
     ports:
-    - '127.0.0.1:10000:8080'
+    - '127.0.0.1:8081:8080'
 
   server:
     restart: on-failure
@@ -53,9 +63,32 @@ services:
     - SERVER_LOG_LEVEL=debug
     - SERVER_BASE_URL=http://127.0.0.1:8080
     networks:
+    - server
     - percona
     ports:
     - '127.0.0.1:8080:8080'
-    - '127.0.0.1:9090:9090'
     depends_on:
     - percona
+
+  prometheus:
+    image: prom/prometheus@sha256:f2fa04806b65f49b652c8d418544bb9660bb8224619ee8c960a778f46614dddf # prom/prometheus:v2.36.2
+    command: --config.file=/etc/prometheus/prometheus.yaml
+    volumes:
+    - prometheus:/prometheus
+    - ./prometheus:/etc/prometheus:ro
+    networks:
+    - prometheus
+    - server
+
+  grafana:
+    image: grafana/grafana@sha256:1e180fcaede581b8cc8e2ce8bc010daff9c64972023a0faaf226d92bd9840113 # grafana/grafana:9.0.2
+    volumes:
+    - grafana-lib:/var/lib/grafana
+    - grafana-log:/var/log/grafana
+    - ./grafana:/etc/grafana/provisioning:ro
+    networks:
+    - prometheus
+    ports:
+    - '127.0.0.1:3000:3000'
+    depends_on:
+    - prometheus
