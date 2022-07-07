@@ -286,7 +286,7 @@ type User struct {
 	// CreatedAt is the time when user was created.
 	CreatedAt int64 `json:"createdAt"`
 
-	// ID is the usr unique identifier.
+	// ID is the user unique identifier.
 	ID string `json:"id"`
 
 	// FirstName is the user first name.
