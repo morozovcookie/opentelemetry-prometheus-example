@@ -186,6 +186,10 @@ func (svc *UserAccountService) FindUserAccounts(
 		return nil, fmt.Errorf("find user accounts: %w", err)
 	}
 
+	if uint64(len(result.Data)) < opts.Limit() {
+		return result, nil
+	}
+
 	if result.HasNext, err = svc.findUserAccountsHasNext(ctx, opts.Offset()+opts.Limit()); err != nil {
 		return nil, fmt.Errorf("find user accounts: %w", err)
 	}
